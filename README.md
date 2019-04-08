@@ -3,28 +3,74 @@ This is a mostly automated script for handling the final stage of ingesting into
 
 ```
   -- Expected Folder Structure
+            Folder Structure
 
             ./automated_ingesting
-              ├── completed
-              ├── errors
-              ├── final_check
-              └── ready_for_processing
-                  └── islandora__bookCollection
-                      └── book
-                          └── alumnus_2015spring
-                              ├── 0001
-                              │   └── OBJ.tif
-                              ├── 0002
-                              │   └── OBJ.tif
-                              ├── 0003
-                              │   ├── OBJ.tif
-                              │   └── OCR.asc
-                              ├── MODS.xml
-                              ├── PRESERVATION.pdf
-                              └── PDF.pdf
+01.            ├── completed
+02.            ├── errors
+03.            ├── final_check
+04.            └── ready_for_processing
+05.                ├── islandora__bookCollection
+06.                │   └── book
+07.                │       └── issue12
+08.                │           ├── 001
+09.                │           │   ├── OBJ.tif
+10.                │           │   └── OCR.asc
+                   │           ├── 002
+                   │           │   └── OBJ.tif
+                   │           ├── 003
+                   │           │   └── OBJ.tif
+11.                │           ├── PDF.pdf
+12.                │           ├── PRESERVATION.pdf
+13.                │           └── MODS.xml
+                   ├── islandora__sp_basic_image_collection
+14.                │   └── basic
+15.                │       ├── OBJ2.jpg
+16.                │       ├── OBJ2.xml
+                   │       ├── OBJ3.jpg
+                   │       ├── OBJ3.xml
+                   │       ├── SunFlowers.jpg
+                   │       └── SunFlowers.xml
+                   └── islandora__sp_large_image_collection
+17.                    └── large_image
+18.                        ├── 001001.tif
+19.                        ├── 001001.xml
+                           ├── 001002.tif
+                           ├── 001002.xml
+                           ├── 001003.jp2
+                           └── 001003.xml
 
+
+1. Collections folder is moved to this folder when no errors detected.
+2. Collections folder is moved to this folder when errors were detected.
+3. This is the folder the files are initially dropped into by the digitization department for review from the metadata librarian.
+4. This is the folder the metadata librarian will move the files to when they are ready to be ingested.
+5. This folder's naming convention is the PID of the parent, note the colon is replaced with 2 underscores.
                   └── islandora__bookCollection
                                  ^^^^^^^^^^^^^^ Name of the parent (PID)
+6. This folder's naming convention is the content model (cModel) of the content being ingested.
+          Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
+                       └── book
+7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Eveything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
+8. Is the folder for the first page
+  a) Folders must be sequental
+  a) Folders must start with 1 or 1 with leading zeros (example: 000001)
+9. Inside page folder there must be and OBJ file with either the tif or jp2 extension (OBJ.tif)
+    a) OBJ should be capital (this script will correct if not)
+    a) Extension should be lowercase (this script will correct if not)
+10. Is the OCR for this page (OPTIONAL)
+11. PDF generated for display (this is the PDF-UA accessable version)
+12. The original PDF for preservation.
+13. Book level MODS for the book. Minimal information will be pasted to the pages.
+14. Basic image example
+15. Basic image (JPG, bmp, gif, png)
+16. MODS file for the basic image. Must match the naming convention for the accompanied basic image file.
+    a) Example SunFlowers.jpg must have a MODS file by the same name SunFlowers.xml
+17. Large image example
+15. Large image (tif, jp2)
+16. MODS file for the large image. Must match the naming convention for the accompanied large image file.
+        a) Example 001001.tif must have a MODS file by the same name 001001.xml
+
 ```
 
 
