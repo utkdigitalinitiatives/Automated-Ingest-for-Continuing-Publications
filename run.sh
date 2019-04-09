@@ -15,10 +15,10 @@ cat << "EOF"
             Folder Structure
 
             ./automated_ingesting
-01.            ├── completed
-02.            ├── errors
-03.            ├── final_check
-04.            └── ready_for_processing
+01.            ├── 4_completed
+02.            ├── 3_errors
+03.            ├── 1_final_check
+04.            └── 2_ready_for_processing
 05.                ├── islandora__bookCollection
 06.                │   └── book
 07.                │       └── issue12
@@ -30,7 +30,7 @@ cat << "EOF"
                    │           ├── 003
                    │           │   └── OBJ.tif
 11.                │           ├── PDF.pdf
-12.                │           ├── PRESERVATION.pdf
+12.                │           ├── ORIGINAL.pdf
 13.                │           └── MODS.xml
                    ├── islandora__sp_basic_image_collection
 14.                │   └── basic
@@ -174,7 +174,7 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
             ;;
           "PDF.pdf" )
             ;;
-          "PRESERVATION.pdf" )
+          "ORIGINAL.pdf" )
             ;;
           * )
             echo -e "**** FOUND a file that shouldn't be here. **** \n"
@@ -287,13 +287,13 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
             fi
 
             # Not doing anything yet. Needs to tell know a way to point to the PID this should go into.
-            for f in ${collection}book/*/*.pdf; do
-              mkdir -p /tmp/pdfs
-              cp $f "/tmp/pdfs/$(basename $(dirname $f))_$(basename ${f%.*}).pdf"
-              ls /tmp/pdfs
-              # drush -v -u 1 islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs --datastreams_mimetype=binary --datastreams_label="Preservations"
-              rm -rf /tmp/pdfs
-            done
+            # for f in ${collection}book/*/*.pdf; do
+            #   mkdir -p /tmp/pdfs
+            #   cp $f "/tmp/pdfs/$(basename $(dirname $f))_$(basename ${f%.*}).pdf"
+            #   ls /tmp/pdfs
+            #   # drush -v -u 1 islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs --datastreams_mimetype=binary --datastreams_label="Ori"
+            #   rm -rf /tmp/pdfs
+            # done
           fi
         fi
       fi
