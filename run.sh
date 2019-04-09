@@ -332,6 +332,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
             rm -f /tmp/automated_ingestion.log
             $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
             if [[ "$msg" =~ *[error]* ]]; then
               echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
@@ -366,12 +367,14 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
           # If no drupal directory was found exit.
           [[ -d $DRUPAL_HOME_DIR ]] || exit
+
           # Ingest basic image content
           # --------------------------------------------------------------------
           if [[ !$TEST_RUN ]]; then
             rm -f /tmp/automated_ingestion.log
             $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
             if [[ "$msg" =~ *[error]* ]]; then
               echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
