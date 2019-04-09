@@ -395,11 +395,20 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
     # --------------------------------------------------------------------------
     if [[ "$FAILURES" -gt 0 ]]; then
       echo "Failure detected with ${collection}"
-      mv "${collection}" "automated_ingesting/3_errors/"
+      if [[ -d "automated_ingesting/3_errors/${basename_of_collection}" ]]; then
+        mv "${collection}" "automated_ingesting/3_errors/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+      else
+        mv "${collection}" "automated_ingesting/3_errors/"
+      fi
+
       echo "${MESSAGES}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
     else
       echo -e "Everything Completed without errors.\n\n\tMoving files to 'completed' directory."
-      mv "${collection}" "automated_ingesting/4_completed/"
+      if [[ -d "automated_ingesting/4_completed/${basename_of_collection}" ]]; then
+        mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+      else
+        mv "${collection}" "automated_ingesting/4_completed/"
+      fi
       echo -e "\tMove Complete.\n\n"
     fi
 
