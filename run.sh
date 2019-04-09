@@ -213,6 +213,7 @@ done
 # Loop through collection (Parent Islandora__PID)
 # ------------------------------------------------------------------------------
 for collection in automated_ingesting/ready_for_processing/*/; do
+
   FAILURES=0
   MESSAGES=""
 
@@ -273,9 +274,10 @@ for collection in automated_ingesting/ready_for_processing/*/; do
           # --------------------------------------------------------------------
           if [[ !$TEST_RUN ]]; then
 
-            rm -f /tmp/automated_ingestion.log
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
+            echo "" > /tmp/automated_ingestion.log
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE  >> /tmp/automated_ingestion.log && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
             if [[ $msg ]]; then
               echo -e "We have an error with the ingestion process" >> automated_ingesting/errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
