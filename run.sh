@@ -93,7 +93,7 @@ EOF
 # ------------------------------------------------------------------------------
 
 # Check if there's anything to process.
-if [[ $(find automated_ingesting/ready_for_processing -type d -empty) ]]; then
+if [[ $(find automated_ingesting/2_ready_for_processing -type d -empty) ]]; then
   echo -e "\n\n\n\nDirectory Empty\n\tnothing to process.\n\n\n\n"
   exit
 fi
@@ -104,7 +104,7 @@ find . -type f -name '*.DS_Store' -ls -delete
 find . -type f -name 'Thumbs.db' -ls -delete
 
 # Find and correct spaces in the filename.
-find ./automated_ingesting/ready_for_processing/ -type f -name "* *" | while read file; do mv "$file" ${file// /}; done
+find ./automated_ingesting/2_ready_for_processing/ -type f -name "* *" | while read file; do mv "$file" ${file// /}; done
 
 # Rename tiff to tif
 find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
@@ -112,9 +112,9 @@ find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
 
 # Loop through the collections
 # ------------------------------------------------------------------------------
-for FOLDER in automated_ingesting/ready_for_processing/*; do
+for FOLDER in automated_ingesting/2_ready_for_processing/*; do
   # reset errors log file.
-  rm -f automated_ingesting/errors/$(basename ${FOLDER}).txt
+  rm -f automated_ingesting/3_errors/$(basename ${FOLDER}).txt
 
   # Check everything first.
   # ----------------------------------------------------------------------------
@@ -122,13 +122,13 @@ for FOLDER in automated_ingesting/ready_for_processing/*; do
   # Empty directory found alert.
   if [[ $(find $FOLDER -type d -empty) ]]; then
     echo "Found an empty directory."
-    echo -e "Found an empty directory \n\t$(find $FOLDER -type d -empty)\n" >> automated_ingesting/errors/$(basename ${FOLDER}).txt
+    echo -e "Found an empty directory \n\t$(find $FOLDER -type d -empty)\n" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
   fi
 
   # Empty file found alert.
   if [[ -n $(find $FOLDER -type f -empty) ]]; then
     echo "Found an empty file."
-    echo -e "Found an empty file \n\t$(find $FOLDER -type f -empty)\n" >> automated_ingesting/errors/$(basename ${FOLDER}).txt
+    echo -e "Found an empty file \n\t$(find $FOLDER -type f -empty)\n" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
   fi
 
   if [[ -d $FOLDER/*/book ]]; then
@@ -147,8 +147,8 @@ for FOLDER in automated_ingesting/ready_for_processing/*; do
 
     if [[ $EXTRA_FILES_FOUND > 0 ]]; then
       # If extra files were found echo a message to a file by the collection name in the errors folder.
-      [[ ! -e automated_ingesting/errors/$(basename ${FOLDER}).txt ]] && touch automated_ingesting/errors/$(basename ${FOLDER}).txt
-      echo -e "${EXTRA_FILES_FOUND} Extra files found in $(basename ${FOLDER})" >> automated_ingesting/errors/$(basename ${FOLDER}).txt
+      [[ ! -e automated_ingesting/3_errors/$(basename ${FOLDER}).txt ]] && touch automated_ingesting/3_errors/$(basename ${FOLDER}).txt
+      echo -e "${EXTRA_FILES_FOUND} Extra files found in $(basename ${FOLDER})" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
     fi
     # Verify the folder's naming convention matches the content model names.
     for SUBFOLDER in $FOLDER/*; do
@@ -178,7 +178,7 @@ for FOLDER in automated_ingesting/ready_for_processing/*; do
             ;;
           * )
             echo -e "**** FOUND a file that shouldn't be here. **** \n"
-            echo -e "$PAGE_FOLDER: not recognised" >> automated_ingesting/errors/$(basename ${FOLDER}).txt
+            echo -e "$PAGE_FOLDER: not recognised" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
             ;;
         esac
       fi
@@ -188,7 +188,7 @@ for FOLDER in automated_ingesting/ready_for_processing/*; do
     # ------------------------------------------------------------------------------
     for INSIDE_OF_PAGE_FOLDER in $FOLDER/*/*/*/*; do
       if [[ ! "$(basename ${INSIDE_OF_PAGE_FOLDER})" =~ ^OBJ.*|^OCR.*|^PDF.pdf ]]; then
-        echo -e "Unexpected file \n\t${INSIDE_OF_PAGE_FOLDER}\n"  >> automated_ingesting/errors/$(basename ${FOLDER}).txt
+        echo -e "Unexpected file \n\t${INSIDE_OF_PAGE_FOLDER}\n"  >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
       fi
     done
 
@@ -205,23 +205,23 @@ for FOLDER in automated_ingesting/ready_for_processing/*; do
   # Only directories (no files) are expected in the collection level folder.
   # Any files here will cause a failure. Checking to verify only directories.
   if [ ! -d "$FOLDER" ]; then
-    echo -e "\tFile found in collection folder!\n\t$FOLDER" >> automated_ingesting/errors/${FOLDER}.txt
+    echo -e "\tFile found in collection folder!\n\t$FOLDER" >> automated_ingesting/3_errors/${FOLDER}.txt
   fi
 done
 
 
 # Loop through collection (Parent Islandora__PID)
 # ------------------------------------------------------------------------------
-for collection in automated_ingesting/ready_for_processing/*/; do
+for collection in automated_ingesting/2_ready_for_processing/*/; do
 
   FAILURES=0
   MESSAGES=""
 
-  if [ -s automated_ingesting/errors/$(basename ${collection}).txt ]; then
+  if [ -s automated_ingesting/3_errors/$(basename ${collection}).txt ]; then
     echo -e "\tError log is not empty and directory requires attention.\n\n"
 
     # move collection to error folder.
-    mv "${collection}" "automated_ingesting/errors/"
+    mv "${collection}" "automated_ingesting/3_errors/"
     exit
 
   else
@@ -254,8 +254,8 @@ for collection in automated_ingesting/ready_for_processing/*/; do
                   NUMTWO="$(expr $(basename ${folders[$(($ix+1))]%[*}) + 0)"
                   if [[ ! $NUM -eq $NUMTWO ]]; then
                     echo "PAGE directories are not sequential. ${folders[$ix]}"
-                    echo "PAGE directories are not sequential. ${folders[$ix]}"  >> automated_ingesting/errors/$basename_of_collection.txt
-                    mv "${collection}" "automated_ingesting/errors/"
+                    echo "PAGE directories are not sequential. ${folders[$ix]}"  >> automated_ingesting/3_errors/$basename_of_collection.txt
+                    mv "${collection}" "automated_ingesting/3_errors/"
                     exit
                   fi
                 fi
@@ -279,7 +279,7 @@ for collection in automated_ingesting/ready_for_processing/*/; do
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
             if [[ $msg ]]; then
-              echo -e "We have an error with the ingestion process" >> automated_ingesting/errors/$(basename ${collection}).txt
+              echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
             else
               echo "Success!"
@@ -311,12 +311,12 @@ for collection in automated_ingesting/ready_for_processing/*/; do
           basic_img_mods_count=$(ls ${collection}basic | egrep '\.xml$' | wc -l)
 
           if [[ ! $basic_img_file_count == $basic_img_mods_count ]]; then
-            echo -e "\n\tImages & MODS don't have exact matches Images:$basic_img_file_count MODS:$basic_img_mods_count\n\t\tEither missing or too many MODS files." >> automated_ingesting/errors/$(basename ${collection}).txt
+            echo -e "\n\tImages & MODS don't have exact matches Images:$basic_img_file_count MODS:$basic_img_mods_count\n\t\tEither missing or too many MODS files." >> automated_ingesting/3_errors/$(basename ${collection}).txt
           fi
 
           for basic_image_file in $(ls ${collection}basic | egrep '\.png$|\.jpg$|\.bmp$|\.gif$'); do
             if [[ ! -f "${collection}basic/${basic_image_file%.*}.xml" ]]; then
-              echo -e "\t\t${basic_image_file%.*}.xml MODS file is missing for ${basic_image_file}" >> automated_ingesting/errors/$(basename ${collection}).txt
+              echo -e "\t\t${basic_image_file%.*}.xml MODS file is missing for ${basic_image_file}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
             fi
           done
 
@@ -330,7 +330,7 @@ for collection in automated_ingesting/ready_for_processing/*/; do
             $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             if [[ "$msg" =~ *[error]* ]]; then
-              echo -e "We have an error with the ingestion process" >> automated_ingesting/errors/$(basename ${collection}).txt
+              echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
             else
               echo "Success!"
@@ -352,12 +352,12 @@ for collection in automated_ingesting/ready_for_processing/*/; do
           large_image_mods_count=$(ls ${collection}large_image | egrep '\.xml$' | wc -l)
 
           if [[ ! $large_image_file_count == $large_image_mods_count ]]; then
-            echo -e "\n\tImages & MODS don't have exact matches Images:$large_image_file_count MODS:$large_image_mods_count\n\t\tEither missing or too many MODS files." >> automated_ingesting/errors/$(basename ${collection}).txt
+            echo -e "\n\tImages & MODS don't have exact matches Images:$large_image_file_count MODS:$large_image_mods_count\n\t\tEither missing or too many MODS files." >> automated_ingesting/3_errors/$(basename ${collection}).txt
           fi
 
           for large_image_file in $(ls ${collection}large_image | egrep '\.tif$|\.jp2$'); do
             if [[ ! -f "${collection}large_image/${large_image_file%.*}.xml" ]]; then
-              echo -e "\t\t${large_image_file%.*}.xml MODS file is missing for ${large_image_file}" >> automated_ingesting/errors/$(basename ${collection}).txt
+              echo -e "\t\t${large_image_file%.*}.xml MODS file is missing for ${large_image_file}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
             fi
           done
 
@@ -370,7 +370,7 @@ for collection in automated_ingesting/ready_for_processing/*/; do
             $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             if [[ "$msg" =~ *[error]* ]]; then
-              echo -e "We have an error with the ingestion process" >> automated_ingesting/errors/$(basename ${collection}).txt
+              echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
             else
               echo "Success!"
@@ -389,11 +389,11 @@ for collection in automated_ingesting/ready_for_processing/*/; do
     # --------------------------------------------------------------------------
     if [[ "$FAILURES" -gt 0 ]]; then
       echo "Failure detected with ${collection}"
-      mv "${collection}" "automated_ingesting/errors/"
-      echo "${MESSAGES}" >> automated_ingesting/errors/$(basename ${collection}).txt
+      mv "${collection}" "automated_ingesting/3_errors/"
+      echo "${MESSAGES}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
     else
       echo -e "Everything Completed without errors.\n\n\tMoving files to 'completed' directory."
-      mv "${collection}" "automated_ingesting/completed/"
+      mv "${collection}" "automated_ingesting/4_completed/"
       echo -e "\tMove Complete.\n\n"
     fi
 
