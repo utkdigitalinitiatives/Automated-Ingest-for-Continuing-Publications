@@ -1,5 +1,5 @@
 # Automated-Ingest-for-Continuing-Publications
-This is a mostly automated script for handling the final stage of ingesting into Islandora. 
+This is a mostly automated script for handling the final stage of ingesting into Islandora.
 
 ```
   -- Expected Folder Structure
@@ -72,10 +72,17 @@ This is a mostly automated script for handling the final stage of ingesting into
         a) Example 001001.tif must have a MODS file by the same name 001001.xml
 
 ```
-
+## How to use this
+First will need to install "https://github.com/SFULibrary/islandora_datastream_crud" into drupal.
+1) vagrant ssh
+2) cd /var/www/drupal/sites/all/modules
+3) git clone https://github.com/SFULibrary/islandora_datastream_crud
+4) drush en -y islandora_datastream_crud
+5) cd /vagrant
+6) ./run.sh
 
 ## Workflow
-1) After content is prepped, files should be placed into the __final_check__ folder for metadata to check and/or modify. 
+1) After content is prepped, files should be placed into the __final_check__ folder for metadata to check and/or modify.
 2) When ready to ingest, move files to __ready_for_processing__
 3) Folder will be examined by this script and either ingested and moved to __completed__ or an error file will be created in the __errors__ folder and the collection will be moved there as well.
 
@@ -102,7 +109,7 @@ This is a mostly automated script for handling the final stage of ingesting into
   - Only directories (no files) are expected in the collection level folder.
     - Any files here will cause a failure. Checking to verify only directories.
   - Verify the folder's naming convention matches the content model names.
-  
+
 - Page level directory checks.
   - Page level folders should only be numeric.
   - Checking the the files in this Folder match the expected Naming convention.
