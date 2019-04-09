@@ -1,12 +1,15 @@
 #!/bin/bash
 
 DRUPAL_HOME_DIR="/var/www/drupal"
+WORKING_HOME_DIR="/vagrant"
+
 clear
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
-
 TEST_RUN=false
+cd $WORKING_HOME_DIR
+
 echo -e "\n\n\n+---------------------------------------------------------------------------------------------------+"
 echo "Date: $TODAY                     Host:$HOST"
 echo -e "+---------------------------------------------------------------------------------------------------+\n\n"
