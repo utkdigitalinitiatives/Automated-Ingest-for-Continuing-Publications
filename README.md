@@ -6,10 +6,10 @@ This is a mostly automated script for handling the final stage of ingesting into
             Folder Structure
 
             ./automated_ingesting
-01.            ├── completed
-02.            ├── errors
-03.            ├── final_check
-04.            └── ready_for_processing
+01.            ├── 4_completed
+02.            ├── 3_errors
+03.            ├── 1_final_check
+04.            └── 2_ready_for_processing
 05.                ├── islandora__bookCollection
 06.                │   └── book
 07.                │       └── issue12
@@ -51,15 +51,15 @@ This is a mostly automated script for handling the final stage of ingesting into
 6. This folder's naming convention is the content model (cModel) of the content being ingested.
           Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
                        └── book
-7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Eveything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
+7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Everything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
 8. Is the folder for the first page
-  a) Folders must be sequental
+  a) Folders must be sequential
   a) Folders must start with 1 or 1 with leading zeros (example: 000001)
 9. Inside page folder there must be and OBJ file with either the tif or jp2 extension (OBJ.tif)
     a) OBJ should be capital (this script will correct if not)
     a) Extension should be lowercase (this script will correct if not)
 10. Is the OCR for this page (OPTIONAL)
-11. PDF generated for display (this is the PDF-UA accessable version)
+11. PDF generated for display (this is the PDF-UA accessible version)
 12. The original PDF for preservation.
 13. Book level MODS for the book. Minimal information will be pasted to the pages.
 14. Basic image example
