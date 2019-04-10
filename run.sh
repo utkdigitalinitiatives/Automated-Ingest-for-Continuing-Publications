@@ -9,6 +9,7 @@ HOST=$(hostname)
 DRUSH=$(which drush)
 TEST_RUN=false
 cd $WORKING_HOME_DIR
+rm -f automated_ingesting/3_errors/problems_with_start.txt
 
 echo -e "\n\n\n+---------------------------------------------------------------------------------------------------+"
 echo "Date: $TODAY                     Host:$HOST"
@@ -51,6 +52,11 @@ cat << "EOF"
                            ├── 001002.xml
                            ├── 001003.jp2
                            └── 001003.xml
+
+
+
+
+
 
 1. Collections folder is moved to this folder when no errors detected.
 2. Collections folder is moved to this folder when errors were detected.
@@ -99,8 +105,15 @@ EOF
 if [[ $(find automated_ingesting/2_ready_for_processing -type d -empty) ]]; then
   echo -e "\n\n\n\nDirectory Empty\n\tnothing to process.\n\n\n\n"
   exit
+elif [ -f automated_ingesting/2_ready_for_processing/*.* ]; then
+  echo -e "woops, extra files in read to process folder.\n\n$(ls automated_ingesting/2_ready_for_processing/*.*)" >> automated_ingesting/3_errors/problems_with_start.txt
+  exit
 fi
 
+if [[ ! -d ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud ]]; then
+  echo "islandora_datastream_crud isn't installed. ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud"
+  exit
+fi
 
 # Cleanup incase of an OSX or Windows mounts create hidden files.
 find . -type f -name '*.DS_Store' -ls -delete
@@ -111,7 +124,7 @@ find ./automated_ingesting/2_ready_for_processing/ -type f -name "* *" | while r
 
 # Rename tiff to tif
 find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
-
+# END of correct common mistakes.
 
 # Loop through the collections
 # ------------------------------------------------------------------------------
@@ -179,6 +192,8 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
             ;;
           "ORIGINAL.pdf" )
             ;;
+          "PRE" )
+            ;;
           * )
             echo -e "**** FOUND a file that shouldn't be here. **** \n"
             echo -e "$PAGE_FOLDER: not recognised" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
@@ -216,10 +231,18 @@ done
 # Loop through collection (Parent Islandora__PID)
 # ------------------------------------------------------------------------------
 for collection in automated_ingesting/2_ready_for_processing/*/; do
+  unset msg
+  basename_of_collection=$(basename ${collection})
+  # clean out old files
+  echo "" > /tmp/automated_ingestion_for_${basename_of_collection}.log
+  echo "" > /tmp/automated_ingestion.log
+  rm -rf /tmp/pdfs
 
+  ADMIN_FAILURES=0
   FAILURES=0
   MESSAGES=""
 
+  # Exit if errors in filesystem exist.
   if [ -s automated_ingesting/3_errors/$(basename ${collection}).txt ]; then
     echo -e "\tError log is not empty and directory requires attention.\n\n"
 
@@ -228,15 +251,16 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
     exit
 
   else
-    echo -e "\tGeneral Checks complete without any errors.\n"
+    echo -e "\n\n\n\tGeneral Checks complete without any errors.\n\n"
 
     # Check that the PID exist
     # --------------------------------------------------------------------------
-    basename_of_collection=$(basename ${collection})
+
     status_code=$(curl --write-out %{http_code} --silent --output /dev/null "http://localhost:8000/islandora/object/${basename_of_collection/__/%3A}")
     if [[ "$status_code" -eq 200 ]] ; then
-
+      # ------------------------------------------------------------------------
       # Book processing
+      # ------------------------------------------------------------------------
       if [[ -d ${collection}book ]]; then
         if [ "$(ls -A ${collection}book)" ]; then
 
@@ -256,7 +280,6 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
                 if [[ "$(basename ${folders[$(($ix+1))]%[*})" == ?(-)+([0-9]) ]] ; then
                   NUMTWO="$(expr $(basename ${folders[$(($ix+1))]%[*}) + 0)"
                   if [[ ! $NUM -eq $NUMTWO ]]; then
-                    echo "PAGE directories are not sequential. ${folders[$ix]}"
                     echo "PAGE directories are not sequential. ${folders[$ix]}"  >> automated_ingesting/3_errors/$basename_of_collection.txt
                     mv "${collection}" "automated_ingesting/3_errors/"
                     exit
@@ -264,7 +287,6 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
                 fi
               fi
             fi
-
           done
 
           namespace="${basename_of_collection#*__}"
@@ -276,32 +298,55 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
           # Ingest book
           # --------------------------------------------------------------------
           if [[ !$TEST_RUN ]]; then
+            echo "" >> /tmp/automated_ingestion.log
+            book_parent="${basename_of_collection//__/:}"
 
-            echo "" > /tmp/automated_ingestion.log
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE  >> /tmp/automated_ingestion.log && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
-            msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
-            if [[ $msg ]]; then
-              echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
-              let FAILURES=FAILURES+1
-            else
-              echo "Success!"
-              echo -e "Book objects ingested\n\n"
+            # Book queuing for ingestion.
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+            sid_value=$(cat /tmp/automated_ingestion.log | head -2 | tail -1)
+
+            # Locating parent PID.
+            [[ $sid_value ]] && PARENT_SID=$($DRUSH -v --root=/var/www/drupal sql-query --db-prefix "SELECT parent FROM islandora_batch_queue WHERE sid=${sid_value}" | grep "[:]" | head -1)
+
+            # Ingesting book
+            $($DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+
+            # Only works with one book at a time.
+            for f in ${collection}book/*; do
+              mkdir -p /tmp/pdfs
+              # Pulls the PID from the filename of the xxxxx_ORIGINAL.pdf
+              cp "${f}/ORIGINAL.pdf" "/tmp/pdfs/${PARENT_SID//:/_}_ORIGINAL.pdf"
+            done
+
+            # Ingest all files in /tmp/pdfs to their corresponding pid.
+            if [[ !  $($DRUSH -u 1 --root=/var/www/drupal --uri=http://localhost -y islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs --datastreams_label="Original") ]]; then
+              $(echo -e "Problem with ingesting $PARENT_SID ORIGINAL.pdf. \n\tThis will need to be done manually or remove $PARENT_SID and try again." >> /tmp/automated_ingestion.log)
+              ADMIN_FAILURES=1
             fi
 
-            # Not doing anything yet. Needs to tell know a way to point to the PID this should go into.
-            # for f in ${collection}book/*/*.pdf; do
-            #   mkdir -p /tmp/pdfs
-            #   cp $f "/tmp/pdfs/$(basename $(dirname $f))_$(basename ${f%.*}).pdf"
-            #   ls /tmp/pdfs
-            #   # drush -v -u 1 islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs --datastreams_mimetype=binary --datastreams_label="Ori"
-            #   rm -rf /tmp/pdfs
-            # done
+            # clean out ORIGINAL.pdf files
+            rm -rf /tmp/pdfs
+
+            msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+
+            if [[ $msg ]]; then
+              echo -e "We have an error with the ingestion process\n\n$msg" >> automated_ingesting/3_errors/$(basename ${collection}).txt
+              let FAILURES=FAILURES+1
+            else
+              echo -e "\tSuccess!\n\t\tBook objects ingested\n\n"
+              echo "PID: ${sid_value}"
+            fi
+            unset msg
           fi
         fi
       fi
 
+      # ------------------------------------------------------------------------
       # Basic Image processing
+      # ------------------------------------------------------------------------
       if [[ -d ${collection}basic ]]; then
         if [ "$(ls -A ${collection}basic)" ]; then
           basic_img_namespace="${basename_of_collection#*__}"
@@ -313,10 +358,12 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
           basic_img_file_count=$(ls ${collection}basic | egrep '\.png$|\.jpg$|\.bmp$|\.gif$' | wc -l)
           basic_img_mods_count=$(ls ${collection}basic | egrep '\.xml$' | wc -l)
 
+          # Check that the number of MODS equals the number of images.
           if [[ ! $basic_img_file_count == $basic_img_mods_count ]]; then
             echo -e "\n\tImages & MODS don't have exact matches Images:$basic_img_file_count MODS:$basic_img_mods_count\n\t\tEither missing or too many MODS files." >> automated_ingesting/3_errors/$(basename ${collection}).txt
           fi
 
+          # Check that each image has a matching MODS file by the same name.
           for basic_image_file in $(ls ${collection}basic | egrep '\.png$|\.jpg$|\.bmp$|\.gif$'); do
             if [[ ! -f "${collection}basic/${basic_image_file%.*}.xml" ]]; then
               echo -e "\t\t${basic_image_file%.*}.xml MODS file is missing for ${basic_image_file}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
@@ -326,32 +373,42 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
           # If no drupal directory was found exit.
           [[ -d $DRUPAL_HOME_DIR ]] || exit
 
-          # Ingest basic image content
+
+          # Basic image ingest content
           # --------------------------------------------------------------------
           if [[ !$TEST_RUN ]]; then
-            rm -f /tmp/automated_ingestion.log
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
+            echo "" > /tmp/automated_ingestion.log
+            echo "Basic -----> $basic_img_parent"
+            # Basic Image queuing for ingestion.
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --content_models=sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
-            if [[ "$msg" =~ *[error]* ]]; then
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+
+            if [[ $msg ]]; then
               echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
             else
               echo "Success!"
               echo -e "Basic Image objects ingested\n\n"
             fi
+            unset msg
           fi
         fi
       fi
 
-      # Large Image processing
+      # ------------------------------------------------------------------------
+      # Large Image processing.
+      # ------------------------------------------------------------------------
       if [[ -d ${collection}large_image ]]; then
         if [ "$(ls -A ${collection}large_image)" ]; then
           large_image_namespace="${basename_of_collection#*__}"
           large_image_target="$(pwd)/${collection}large_image/"
           large_image_parent="${basename_of_collection//__/:}"
 
-          # Check images have pairs
+          # Check Large images have pairs
           large_image_file_count=$(ls ${collection}large_image | egrep '\.tif$|\.jp2$' | wc -l)
           large_image_mods_count=$(ls ${collection}large_image | egrep '\.xml$' | wc -l)
 
@@ -368,20 +425,27 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
           # If no drupal directory was found exit.
           [[ -d $DRUPAL_HOME_DIR ]] || exit
 
-          # Ingest basic image content
+          # Large image ingest content.
           # --------------------------------------------------------------------
           if [[ !$TEST_RUN ]]; then
-            rm -f /tmp/automated_ingestion.log
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_book_batch_preprocess --create_pdfs=false --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest 2>&1 | tee /tmp/automated_ingestion.log)
+            echo "" > /tmp/automated_ingestion.log
+
+            # Large Image queuing for ingestion.
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
-            if [[ "$msg" =~ *[error]* ]]; then
+            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+            msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+
+            if [[ $msg ]]; then
               echo -e "We have an error with the ingestion process" >> automated_ingesting/3_errors/$(basename ${collection}).txt
               let FAILURES=FAILURES+1
             else
               echo "Success!"
               echo -e "Basic Image objects ingested\n\n"
             fi
+
           fi
         fi
       fi
@@ -391,24 +455,40 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
       let FAILURES=FAILURES+1
     fi
 
-    # Failure trigger action
+    # Actions for when a Failure is detected
     # --------------------------------------------------------------------------
-    if [[ "$FAILURES" -gt 0 ]]; then
-      echo "Failure detected with ${collection}"
+    if [[ "$FAILURES" -gt 0 ]] || [[ "$ADMIN_FAILURES" -gt 0 ]]; then
+      echo -e "\n\n\nFailure detected with ${collection}\n\t${FAILURES}\n\n"
+
+      # Set the location where the error folder is.
+      ERROR_LOCATION="automated_ingesting/3_errors/"
+
+      # Check to see if there's a naming conflict for error directory.
       if [[ -d "automated_ingesting/3_errors/${basename_of_collection}" ]]; then
-        mv "${collection}" "automated_ingesting/3_errors/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
-      else
-        mv "${collection}" "automated_ingesting/3_errors/"
+        ERROR_LOCATION="automated_ingesting/3_errors/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
       fi
 
-      echo "${MESSAGES}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
+      # Move to error folder.
+      mv "${collection}" "${ERROR_LOCATION}"
+
+      # Check if the error occurred after the ingestion process started.
+      if [[ $ADMIN_FAILURES -eq 1 ]]; then
+        # Send a warning to the log file that a SYSTEMS ADMIN is needed to correct this error and not to reattempt.
+        echo -e "PLEASE CONTACT SYSTEM ADMIN.\n\tDo NOT attempt to reprocess the $(basename ${collection}) directory. This directory is set to read only until system admin has corrected the issue.\n${MESSAGES}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
+      else
+        echo -e "${MESSAGES}" >> automated_ingesting/3_errors/$(basename ${collection}).txt
+      fi
+
     else
       echo -e "Everything Completed without errors.\n\n\tMoving files to 'completed' directory."
+
+      # Check to see if there's a naming conflict for completed directory.
       if [[ -d "automated_ingesting/4_completed/${basename_of_collection}" ]]; then
         mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
       else
         mv "${collection}" "automated_ingesting/4_completed/"
       fi
+
       echo -e "\tMove Complete.\n\n"
     fi
 
