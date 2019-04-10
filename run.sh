@@ -380,7 +380,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
             echo "" > /tmp/automated_ingestion.log
             echo "Basic -----> $basic_img_parent"
             # Basic Image queuing for ingestion.
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --content_models=sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
@@ -431,7 +431,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
             echo "" > /tmp/automated_ingestion.log
 
             # Large Image queuing for ingestion.
-            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+            $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
             msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
             msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
