@@ -7,7 +7,7 @@ clear
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
-TEST_RUN=false
+TEST_RUN=0
 cd $WORKING_HOME_DIR
 rm -f automated_ingesting/3_errors/problems_with_start.txt
 
@@ -25,6 +25,7 @@ cat << "EOF"
 04.            └── 2_ready_for_processing
 05.                ├── islandora__bookCollection
 06.                │   └── book
+07a.               │       ├── issue12.yml
 07.                │       └── issue12
 08.                │           ├── 001
 09.                │           │   ├── OBJ.tif
@@ -69,6 +70,7 @@ cat << "EOF"
           Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
                        └── book
 7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Eveything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
+7a. YAML file to generate MODS
 8. Is the folder for the first page
   a) Folders must be sequental
   a) Folders must start with 1 or 1 with leading zeros (example: 000001)
@@ -147,7 +149,8 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
     echo -e "Found an empty file \n\t$(find $FOLDER -type f -empty)\n" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
   fi
 
-  if [[ -d $FOLDER/*/book ]]; then
+  if [[ -d $FOLDER/book ]]; then
+
     # Correct if filename for MODS/PDF is lowercase or the extension is uppercase.
     rename --force 's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.*
     rename --force 's/([^.]*)/\U$1/' $FOLDER/*/*/*.*
@@ -157,10 +160,9 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
     rename --force 's/([^.]*)/\U$1/' $FOLDER/*/*/*/*.*
 
     # Look for unexpected files inside of the ready_to_process folder
-    EXTRA_FILES_FOUND=$(find $FOLDER/*  -maxdepth 0 -name \* -and -type f | wc -l)
+    EXTRA_FILES_FOUND=$(find $FOLDER/* -maxdepth 0 -name \* -and -type f | wc -l)
     # Look for unexpected files inside of the collection folder.
-    EXTRA_FILES_FOUND=$(( $EXTRA_FILES_FOUND + $(find $FOLDER/*/*  -maxdepth 0 -name \* -and -type f | wc -l)))
-
+    EXTRA_FILES_FOUND=$(( $EXTRA_FILES_FOUND + $(find $FOLDER/*/* -maxdepth 0 -name \* ! -iname "*.yml" -and -type f | wc -l)))
     if [[ $EXTRA_FILES_FOUND > 0 ]]; then
       # If extra files were found echo a message to a file by the collection name in the errors folder.
       [[ ! -e automated_ingesting/3_errors/$(basename ${FOLDER}).txt ]] && touch automated_ingesting/3_errors/$(basename ${FOLDER}).txt
@@ -176,9 +178,23 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
         "basic" )
           ;;
         * )
-          echo "FOUND folder by the wrong name" ;;
+          echo "FOUND ${SUBFOLDER} folder by the wrong name in $FOLDER" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
+          ;;
       esac
     done # End of SUBFOLDER loop
+
+    # Make MODS.xml from MODS.yml
+    for INSIDE_SUBFOLDER in $FOLDER/*/*.*; do
+      case "$(basename ${INSIDE_SUBFOLDER%.*}.yml)" in
+        "$(basename $INSIDE_SUBFOLDER)" )
+          ./create_mods.sh $INSIDE_SUBFOLDER
+          ;;
+        * )
+          echo "FOUND unexpected file $INSIDE_SUBFOLDER inside $FOLDER" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
+          ;;
+      esac
+    done # End of INSIDE_SUBFOLDER loop
+
     # Page level directory checks.
     # ----------------------------------------------------------------------------
     for PAGE_FOLDER in $FOLDER/*/*/*; do
@@ -247,7 +263,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
     echo -e "\tError log is not empty and directory requires attention.\n\n"
 
     # move collection to error folder.
-    mv "${collection}" "automated_ingesting/3_errors/"
+    [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/3_errors/"
     exit
 
   else
@@ -281,7 +297,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
                   NUMTWO="$(expr $(basename ${folders[$(($ix+1))]%[*}) + 0)"
                   if [[ ! $NUM -eq $NUMTWO ]]; then
                     echo "PAGE directories are not sequential. ${folders[$ix]}"  >> automated_ingesting/3_errors/$basename_of_collection.txt
-                    mv "${collection}" "automated_ingesting/3_errors/"
+                    [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/3_errors/"
                     exit
                   fi
                 fi
@@ -469,7 +485,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
       fi
 
       # Move to error folder.
-      mv "${collection}" "${ERROR_LOCATION}"
+      [[ $TEST_RUN ]] && mv "${collection}" "${ERROR_LOCATION}"
 
       # Check if the error occurred after the ingestion process started.
       if [[ $ADMIN_FAILURES -eq 1 ]]; then
@@ -480,13 +496,13 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
       fi
 
     else
-      echo -e "Everything Completed without errors.\n\n\tMoving files to 'completed' directory."
+      echo -e "Everything Completed.\n\n\tMoving files to 'completed' directory."
 
       # Check to see if there's a naming conflict for completed directory.
       if [[ -d "automated_ingesting/4_completed/${basename_of_collection}" ]]; then
-        mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+        [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
       else
-        mv "${collection}" "automated_ingesting/4_completed/"
+        [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/4_completed/"
       fi
 
       echo -e "\tMove Complete.\n\n"
