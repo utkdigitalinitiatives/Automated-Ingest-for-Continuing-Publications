@@ -12,7 +12,8 @@ This is a mostly automated script for handling the final stage of ingesting into
 04.            └── 2_ready_for_processing
 05.                ├── islandora__bookCollection
 06.                │   └── book
-07.                │       └── issue12
+07a.               │       └── issue12.yml
+07b.               │       └── issue12
 08.                │           ├── 001
 09.                │           │   ├── OBJ.tif
 10.                │           │   └── OCR.asc
@@ -51,7 +52,8 @@ This is a mostly automated script for handling the final stage of ingesting into
 6. This folder's naming convention is the content model (cModel) of the content being ingested.
           Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
                        └── book
-7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Everything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
+7a. YAML file specific to that book/issue. This will generate MODS for (7b)
+7b. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Everything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
 8. Is the folder for the first page
   a) Folders must be sequential
   a) Folders must start with 1 or 1 with leading zeros (example: 000001)
@@ -80,6 +82,12 @@ First will need to install "https://github.com/SFULibrary/islandora_datastream_c
 4) drush en -y islandora_datastream_crud
 5) cd /vagrant
 6) ./run.sh
+
+## Using YAML
+In the folder "collection_templates is half of a MODS in YAML form"
+  * [Example of how to convert](https://codebeautify.org/yaml-to-json-xml-csv)
+The other half is at the issues level within the book cmodel (7a)
+  * For example of this yml file see example_mods.yml
 
 ## Workflow
 1) After content is prepped, files should be placed into the __final_check__ folder for metadata to check and/or modify.

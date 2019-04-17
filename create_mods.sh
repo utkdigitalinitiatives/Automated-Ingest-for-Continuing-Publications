@@ -20,72 +20,29 @@ function parse_yaml {
       }
    }'
 }
-# Pulls the yaml files in as variables
-eval $(parse_yaml $1)
+# Pulls the yaml values for the book issue in as variables.
+eval $(parse_yaml "${1}.yml")
+# Pulls the default collection yaml values for the book issue in as variables.
+eval $(parse_yaml "collection_templates/$(basename ${2}).yml")
 
 # build the mods file
 modsfile=$(cat <<EOF
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
   <titleInfo>
-    <title>$mods_title</title>
-    <subTitle>$mods_subTitle</subTitle>
+    <title>${mods_title}</title>
+    <subTitle>${mods_subTitle}</subTitle>
   </titleInfo>
-  <name type="personal">
-    <namePart>$mods_namePart</namePart>
-    <role>
-      <roleTerm authority="marcrelator" type="text">$mods_role_text</roleTerm>
-    </role>
-  </name>
   <typeOfResource>text</typeOfResource>
-  <genre authority="marcgt">$mods_text</genre>
-  <tableOfContents/>
   <originInfo>
-    <dateIssued>$mods_dateIssued</dateIssued>
-    <copyrightDate>$mods_copyrightDate</copyrightDate>
+    <dateIssued>${mods_dateIssued}</dateIssued>
     <issuance>monographic</issuance>
-    <edition>$mods_edition</edition>
-    <publisher>$mods_publisher</publisher>
-    <place>
-      <placeTerm authority="marccountry">$mods_place__text</placeTerm>
-    </place>
-    <place>
-      <placeTerm type="text">Kiwa</placeTerm>
-    </place>
+    <publisher>University of Tennessee Knoxville</publisher>
   </originInfo>
-  <language>
-    <languageTerm authority="iso639-2b" type="code">eng</languageTerm>
-  </language>
-  <abstract>$mods_abstract</abstract>
-  <identifier type="isbn"/>
-  <physicalDescription>
-    <form authority="marcform"/>
-    <extent/>
-  </physicalDescription>
-  <note type="statement of responsibility"/>
-  <note>Pretty amazing book</note>
-  <subject>
-    <topic>lobster</topic>
-    <geographic/>
-    <temporal/>
-    <hierarchicalGeographic>
-      <continent/>
-      <country/>
-      <province/>
-      <region/>
-      <county/>
-      <city/>
-      <citySection/>
-    </hierarchicalGeographic>
-    <cartographics>
-      <coordinates/>
-    </cartographics>
-  </subject>
-  <classification authority="lcc"/>
-  <classification edition="21" authority="ddc"/>
+  <note>${mods_notes}</note>
 </mods>
 EOF
 )
 
 # creates the MODS file
-echo "$modsfile" >> "${1%.*}/MODS.xml"
+echo "$modsfile" > "${1%.*}/MODS.xml"

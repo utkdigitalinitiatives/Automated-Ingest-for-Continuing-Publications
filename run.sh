@@ -7,7 +7,7 @@ clear
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
-TEST_RUN=0
+TEST_RUN=false
 cd $WORKING_HOME_DIR
 rm -f automated_ingesting/3_errors/problems_with_start.txt
 
@@ -117,6 +117,11 @@ if [[ ! -d ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud ]]; th
   exit
 fi
 
+if [[ ! -d $(pwd)/collection_templates ]]; then
+  echo "YAML templates are missing."
+  exit
+fi
+
 # Cleanup incase of an OSX or Windows mounts create hidden files.
 find . -type f -name '*.DS_Store' -ls -delete
 find . -type f -name 'Thumbs.db' -ls -delete
@@ -183,17 +188,9 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
       esac
     done # End of SUBFOLDER loop
 
-    # Make MODS.xml from MODS.yml
-    for INSIDE_SUBFOLDER in $FOLDER/*/*.*; do
-      case "$(basename ${INSIDE_SUBFOLDER%.*}.yml)" in
-        "$(basename $INSIDE_SUBFOLDER)" )
-          ./create_mods.sh $INSIDE_SUBFOLDER
-          ;;
-        * )
-          echo "FOUND unexpected file $INSIDE_SUBFOLDER inside $FOLDER" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
-          ;;
-      esac
-    done # End of INSIDE_SUBFOLDER loop
+    for YML_FILE in $FOLDER/*/*.yml; do
+      ./create_mods.sh "${YML_FILE%.yml}" "${FOLDER}"
+    done
 
     # Page level directory checks.
     # ----------------------------------------------------------------------------
@@ -207,8 +204,6 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
           "PDF.pdf" )
             ;;
           "ORIGINAL.pdf" )
-            ;;
-          "PRE" )
             ;;
           * )
             echo -e "**** FOUND a file that shouldn't be here. **** \n"
@@ -225,7 +220,6 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
         echo -e "Unexpected file \n\t${INSIDE_OF_PAGE_FOLDER}\n"  >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
       fi
     done
-
   fi
 
   # Check if folder is named correctly.
@@ -263,7 +257,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
     echo -e "\tError log is not empty and directory requires attention.\n\n"
 
     # move collection to error folder.
-    [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/3_errors/"
+    [[ $TEST_RUN == true ]] || mv "${collection}" "automated_ingesting/3_errors/"
     exit
 
   else
@@ -297,7 +291,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
                   NUMTWO="$(expr $(basename ${folders[$(($ix+1))]%[*}) + 0)"
                   if [[ ! $NUM -eq $NUMTWO ]]; then
                     echo "PAGE directories are not sequential. ${folders[$ix]}"  >> automated_ingesting/3_errors/$basename_of_collection.txt
-                    [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/3_errors/"
+                    [[ $TEST_RUN == true ]] || mv "${collection}" "automated_ingesting/3_errors/"
                     exit
                   fi
                 fi
@@ -313,7 +307,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
           # Ingest book
           # --------------------------------------------------------------------
-          if [[ !$TEST_RUN ]]; then
+          if [[ ! $TEST_RUN == true ]]; then
             echo "" >> /tmp/automated_ingestion.log
             book_parent="${basename_of_collection//__/:}"
 
@@ -331,7 +325,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
             for f in ${collection}book/*; do
               mkdir -p /tmp/pdfs
               # Pulls the PID from the filename of the xxxxx_ORIGINAL.pdf
-              cp "${f}/ORIGINAL.pdf" "/tmp/pdfs/${PARENT_SID//:/_}_ORIGINAL.pdf"
+              [[ -f "${f}/ORIGINAL.pdf" ]] && cp "${f}/ORIGINAL.pdf" "/tmp/pdfs/${PARENT_SID//:/_}_ORIGINAL.pdf"
             done
 
             # Ingest all files in /tmp/pdfs to their corresponding pid.
@@ -392,7 +386,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
           # Basic image ingest content
           # --------------------------------------------------------------------
-          if [[ !$TEST_RUN ]]; then
+          if [[ ! $TEST_RUN == true ]]; then
             echo "" > /tmp/automated_ingestion.log
             echo "Basic -----> $basic_img_parent"
             # Basic Image queuing for ingestion.
@@ -443,7 +437,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
           # Large image ingest content.
           # --------------------------------------------------------------------
-          if [[ !$TEST_RUN ]]; then
+          if [[ ! $TEST_RUN == true ]]; then
             echo "" > /tmp/automated_ingestion.log
 
             # Large Image queuing for ingestion.
@@ -485,7 +479,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
       fi
 
       # Move to error folder.
-      [[ $TEST_RUN ]] && mv "${collection}" "${ERROR_LOCATION}"
+      [[ $TEST_RUN == true ]] || mv "${collection}" "${ERROR_LOCATION}"
 
       # Check if the error occurred after the ingestion process started.
       if [[ $ADMIN_FAILURES -eq 1 ]]; then
@@ -500,9 +494,9 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
       # Check to see if there's a naming conflict for completed directory.
       if [[ -d "automated_ingesting/4_completed/${basename_of_collection}" ]]; then
-        [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+        [[ $TEST_RUN == true ]] || mv "${collection}" "automated_ingesting/4_completed/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
       else
-        [[ $TEST_RUN ]] && mv "${collection}" "automated_ingesting/4_completed/"
+        [[ $TEST_RUN == true ]] || mv "${collection}" "automated_ingesting/4_completed/"
       fi
 
       echo -e "\tMove Complete.\n\n"

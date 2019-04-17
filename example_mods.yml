@@ -2,20 +2,5 @@ mods:
  titleInfo:
   title: "Hitchhiker's Guide to Islandora"
   subTitle: "This is an Amazing Book"
- name:
-  namePart: "Don Richards"
-  role:
-   roleTerm:
-    text: "Amazing Book maker"
- genre:
-  text: scifi
- tableOfContents: ""
  originInfo:
   dateIssued: "2018-04-01"
-  copyrightDate: "2018-04-02"
-  edition: 1st
-  publisher: "Islandora Book Press"
-  place:
-   placeTerm:
-     text: Canada
- abstract: "Boxfish Ratfish, great white shark triggerfish, brook trout Black swallower, squeaker, burrowing goby sailfin silverside Steve fish. Powen lake whitefish hammerhead shark Atlantic cod; waryfish dace oldwife píntano! Siamese fighting fish, pupfish priapumfish cutlassfish sheatfish Chinook salmon mustache triggerfish pearleye driftfish Pacific saury Black angelfish flying characin darter? Crucian carp whitefish? Panga bocaccio Black angelfish riffle dace whitefish, deep sea bonefish halfmoon; spaghetti eel. Sundaland noodlefish Spanish mackerel cow shark threespine stickleback Canthigaster rostrata kaluga leatherjacket grouper. Coley bigscale fish zebra pleco. Huchen stargazer chain pickerel vendace king of herring Japanese eel, Modoc sucker molly sandburrower sand tiger, sand dab."
