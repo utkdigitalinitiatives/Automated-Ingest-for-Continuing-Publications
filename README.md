@@ -7,15 +7,20 @@ This is a mostly automated script for handling the final stage of ingesting into
       ├── README.md
 1.    ├── collection_templates
 2.    │   ├── islandora__bookCollection.xml
-3.    │   └── islandora__bookCollection.yml
-4.    ├── create_mods.sh
-5.    └── run.sh
+3.    │   ├── islandora__bookCollection.yml
+4.    │   └── page_example_DC.xml
+5.    ├── create_dc.sh
+6.    ├── create_mods.sh
+7.    └── run.sh
 ```
+
 1. Collection templates for generating MODS
 2. A generic MODS file by collection name. Variables are embedded in the file to be replaced with the yml file variables.
 3. YAML file by collection name for the specific object (only working for books at this time). This is to be copied manually into the collection folder next to the cmodel directory with the same name as the issue. Using the example below the islandora__bookCollection.yml file needs to be coppied into the "book" directory and rename to match the folder (example issue1.yml).
-4. Creates a MODS file from the collection_templates XML file and the YAML file inside of the content model folder.
-5. The main script to execute.
+4. This is used to create a page level DC file.
+5. This is the script the uses #4's file to generate and validate a DC file for each page in a book.
+6. Creates a MODS file from the collection_templates XML file and the YAML file inside of the content model folder.
+7. The main script to execute.
 
 
 ```
@@ -78,6 +83,7 @@ First will need to install "https://github.com/SFULibrary/islandora_datastream_c
 3) git clone https://github.com/SFULibrary/islandora_datastream_crud
 4) drush en -y islandora_datastream_crud
 5) cd /vagrant
+5a) edit run.sh in test mode (OPTIONAL). Change TEST_RUN to TRUE `TEST_RUN=true`. This will run everything accept the ingest and won't move the files for 2_ready_for_processing.
 6) ./run.sh
 
 ## Using YAML
@@ -130,7 +136,7 @@ The other half is at the issues level within the book cmodel (7a)
 - Move collection to `automated_ingesting/completed` when successfully ingested with no errors.
 
 ## Additional Content Models
-Match the file name (excluding the dot extension) with it's mods file. 
+Match the file name (excluding the dot extension) with it's mods file.
 ```
 Basic Image
               islandora__sp_basic_image_collection/
