@@ -1,5 +1,10 @@
-# Automated-Ingest-for-Continuing-Publications
-This is a mostly automated script for handling the final stage of ingesting into Islandora.
+# Automated Ingest for Continuing Publications
+This is a script for automating the final checks and ingestion of books, large images and basic images into existing collections. Some collections like "Continuing Publications" frequently need to have an object (book, large image, basic image) ingested. This process can be repetitive and can be automated.
+
+This uses a combination of folder names and YAML files to determine parent collection, content models and page names. When an issue is triggered a process is run to notify the user of the issue and stops the process for the ingest in a way that doesn't block other ingestions.
+
+The script is intended to be run as part of a cron job but can be done manually. The current configuration is setup for [Islandora vagrant](https://github.com/Islandora-Labs/islandora_vagrant) by default. To adapt this for your environment change the __DRUPAL_HOME_DIR__ and __WORKING_HOME_DIR__ in the 'run.sh' file.
+
 
 ## Files
 ```shell
