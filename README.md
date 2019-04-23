@@ -1,77 +1,74 @@
 # Automated-Ingest-for-Continuing-Publications
 This is a mostly automated script for handling the final stage of ingesting into Islandora.
 
+## Files
+```shell
+    Automated-Ingest-for-Continuing-Publications
+      ├── README.md
+1.    ├── collection_templates
+2.    │   ├── islandora__bookCollection.xml
+3.    │   └── islandora__bookCollection.yml
+4.    ├── create_mods.sh
+5.    └── run.sh
+```
+1. Collection templates for generating MODS
+2. A generic MODS file by collection name. Variables are embedded in the file to be replaced with the yml file variables.
+3. YAML file by collection name for the specific object (only working for books at this time). This is to be copied manually into the collection folder next to the cmodel directory with the same name as the issue. Using the example below the islandora__bookCollection.yml file needs to be coppied into the "book" directory and rename to match the folder (example issue1.yml).
+4. Creates a MODS file from the collection_templates XML file and the YAML file inside of the content model folder.
+5. The main script to execute.
+
+
 ```
   -- Expected Folder Structure
-            Folder Structure
+  Folder Structure
 
-            ./automated_ingesting
-01.            ├── 4_completed
-02.            ├── 3_errors
-03.            ├── 1_final_check
-04.            └── 2_ready_for_processing
-05.                ├── islandora__bookCollection
-06.                │   └── book
-07a.               │       └── issue12.yml
-07b.               │       └── issue12
-08.                │           ├── 001
-09.                │           │   ├── OBJ.tif
-10.                │           │   └── OCR.asc
-                   │           ├── 002
-                   │           │   └── OBJ.tif
-                   │           ├── 003
-                   │           │   └── OBJ.tif
-11.                │           ├── PDF.pdf
-12.                │           ├── PRESERVATION.pdf
-13.                │           └── MODS.xml
-                   ├── islandora__sp_basic_image_collection
-14.                │   └── basic
-15.                │       ├── OBJ2.jpg
-16.                │       ├── OBJ2.xml
-                   │       ├── OBJ3.jpg
-                   │       ├── OBJ3.xml
-                   │       ├── SunFlowers.jpg
-                   │       └── SunFlowers.xml
-                   └── islandora__sp_large_image_collection
-17.                    └── large_image
-18.                        ├── 001001.tif
-19.                        ├── 001001.xml
-                           ├── 001002.tif
-                           ├── 001002.xml
-                           ├── 001003.jp2
-                           └── 001003.xml
+            automated_ingesting
+1             ├── 1_final_check
+2             ├── 2_ready_for_processing
+3             │   └── islandora__bookCollection
+4             │       └── book
+5             │           ├── issue1
+6             │           │   ├── 1
+7             │           │   │   ├── OBJ.tif
+7a            │           │   │   └── OCR.asc
+              │           │   ├── 2
+              │           │   │   └── OBJ.tif
+              │           │   ├── 3
+              │           │   │   └── OBJ.tif
+8             │           │   ├── ORIGINAL.pdf
+9             │           │   └── PDF.pdf
+10            │           └── issue1.yml
+11            ├── 3_errors
+12            │   ├── islandora__bookCollection/
+13            │   └── islandora__bookCollection.txt
+15            └── 4_completed
+                  └── islandora__sp_large_image_collection
 
 
-1. Collections folder is moved to this folder when no errors detected.
-2. Collections folder is moved to this folder when errors were detected.
-3. This is the folder the files are initially dropped into by the digitization department for review from the metadata librarian.
-4. This is the folder the metadata librarian will move the files to when they are ready to be ingested.
-5. This folder's naming convention is the PID of the parent, note the colon is replaced with 2 underscores.
-                  └── islandora__bookCollection
-                                 ^^^^^^^^^^^^^^ Name of the parent (PID)
-6. This folder's naming convention is the content model (cModel) of the content being ingested.
-          Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
-                       └── book
-7a. YAML file specific to that book/issue. This will generate MODS for (7b)
-7b. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Everything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
-8. Is the folder for the first page
+
+1. Final Checks (human) before processing. This is the folder the files are initially dropped into by the digitization department for review from the metadata librarian.
+2. When a collection is placed in here it will be processed.
+3. This folder's naming convention is the PID of the parent, note the colon is replaced with 2 underscores.
+        └── islandora__bookCollection
+                       ^^^^^^^^^^^^^^ Name of the parent (PID)
+4. This folder's naming convention (book) is the string that represents a content model (cModel) of the content being ingested.
+        Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
+            └── book
+5. Folder naming for this is arbitrary and is used to match the YAML file with a book (name it whatever you want). This script will attempt to ingest everything in this folder as a book. Any unexpected files could cause a failure.
+
+6. Is the folder for the first page. The folder's name "1" is used to create the page title "Page 1".
   a) Folders must be sequential
-  a) Folders must start with 1 or 1 with leading zeros (example: 000001)
-9. Inside page folder there must be and OBJ file with either the tif or jp2 extension (OBJ.tif)
-    a) OBJ should be capital (this script will correct if not)
-    a) Extension should be lowercase (this script will correct if not)
-10. Is the OCR for this page (OPTIONAL)
-11. PDF generated for display (this is the PDF-UA accessible version)
-12. The original PDF for preservation.
-13. Book level MODS for the book. Minimal information will be pasted to the pages.
-14. Basic image example
-15. Basic image (JPG, bmp, gif, png)
-16. MODS file for the basic image. Must match the naming convention for the accompanied basic image file.
-    a) Example SunFlowers.jpg must have a MODS file by the same name SunFlowers.xml
-17. Large image example
-15. Large image (tif, jp2)
-16. MODS file for the large image. Must match the naming convention for the accompanied large image file.
-        a) Example 001001.tif must have a MODS file by the same name 001001.xml
+  b) Folders must start with 1 or 1 with leading zeros (example: 000001)
+7. Is the Page's tif file.
+7a. Is the OCR for the tif (OPTIONAL). Readme more https://www.ibm.com/support/knowledgecenter/ca/SSEPGG_9.7.0/com.ibm.db2.luw.admin.dm.doc/doc/r0004663.html
+
+8. Original.pdf (OPTIONAL) is the PDF that was originally created and not accessibly compliant for online access.
+9. PDF generated for display (this is the PDF-UA accessible version)
+10. YAML file to generate MODS for book object.
+11. 3_errors is the folder where collection level will be moved to when an error is detected.
+12. EXAMPLE of #3's collection level folder when a collection like islandora__bookCollection has an error.
+13. The log file of the issue with the same name as the collection folder.
+15. The folder where a collection folder is moved to when everything ingests as expected.
 
 ```
 ## How to use this
@@ -131,3 +128,27 @@ The other half is at the issues level within the book cmodel (7a)
 
 - Move collection to error folder when an error occurred.
 - Move collection to `automated_ingesting/completed` when successfully ingested with no errors.
+
+## Additional Content Models
+Match the file name (excluding the dot extension) with it's mods file. 
+```
+Basic Image
+              islandora__sp_basic_image_collection/
+                  └── basic
+                      ├── OBJ2.jpg   <─┐
+                      ├── OBJ2.xml     └── Matching JPG & MODS names
+                      ├── OBJ3.bmp
+                      ├── OBJ3.xml
+                      ├── SunFlowers_Compressed_B44A.gif
+                      └── SunFlowers_Compressed_B44A.xml
+
+Large Image
+             islandora__sp_large_image_collection
+                  └── large_image
+                      ├── 001001.tif   <─┐
+                      ├── 001001.xml     └── Matching tif & MODS names
+                      ├── 001002.tif
+                      ├── 001002.xml
+                      ├── 001003.jp2   <─┐
+                      └── 001003.xml     └── Matching jp2 & MODS names
+```

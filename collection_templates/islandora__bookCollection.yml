@@ -1,4 +1,2 @@
-mods:
- typeOfResource: text
- originInfo:
- note: "Some notes"
+mods_title: "Spring 2016"
+mods_dateIssued: "2016-01-01"

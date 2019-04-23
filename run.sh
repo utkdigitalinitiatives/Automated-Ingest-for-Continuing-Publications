@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 DRUPAL_HOME_DIR="/var/www/drupal"
 WORKING_HOME_DIR="/vagrant"
@@ -11,84 +11,26 @@ TEST_RUN=false
 cd $WORKING_HOME_DIR
 rm -f automated_ingesting/3_errors/problems_with_start.txt
 
-echo -e "\n\n\n+---------------------------------------------------------------------------------------------------+"
-echo "Date: $TODAY                     Host:$HOST"
-echo -e "+---------------------------------------------------------------------------------------------------+\n\n"
 CHECK_MARK="\033[0;32m\xE2\x9C\x94\033[0m"
+
+echo -e "\n\n\n+---------------------------------------------------------------------------------------------------+\n"
+echo -e "+---------------------------------------------------------------------------------------------------+\n\n"
+
 cat << "EOF"
-            Folder Structure
 
-            ./automated_ingesting
-01.            ├── 4_completed
-02.            ├── 3_errors
-03.            ├── 1_final_check
-04.            └── 2_ready_for_processing
-05.                ├── islandora__bookCollection
-06.                │   └── book
-07a.               │       ├── issue12.yml
-07.                │       └── issue12
-08.                │           ├── 001
-09.                │           │   ├── OBJ.tif
-10.                │           │   └── OCR.asc
-                   │           ├── 002
-                   │           │   └── OBJ.tif
-                   │           ├── 003
-                   │           │   └── OBJ.tif
-11.                │           ├── PDF.pdf
-12.                │           ├── ORIGINAL.pdf
-13.                │           └── MODS.xml
-                   ├── islandora__sp_basic_image_collection
-14.                │   └── basic
-15.                │       ├── OBJ2.jpg
-16.                │       ├── OBJ2.xml
-                   │       ├── OBJ3.jpg
-                   │       ├── OBJ3.xml
-                   │       ├── SunFlowers.jpg
-                   │       └── SunFlowers.xml
-                   └── islandora__sp_large_image_collection
-17.                    └── large_image
-18.                        ├── 001001.tif
-19.                        ├── 001001.xml
-                           ├── 001002.tif
-                           ├── 001002.xml
-                           ├── 001003.jp2
-                           └── 001003.xml
+
+
+        _______       ________   _____ __     _________   ________
+        ___    |      ____  _/   __  // /     __  ____/   ___  __ \
+        __  /| |       __  /     _  // /_     _  /        __  /_/ /
+        _  ___ |      __/ /      /__  __/     / /___      _  ____/
+        /_/  |_|      /___/        /_/        \____/      /_/
+
+                                                              islandora 7.x
 
 
 
 
-
-
-1. Collections folder is moved to this folder when no errors detected.
-2. Collections folder is moved to this folder when errors were detected.
-3. This is the folder the files are initially dropped into by the digitization department for review from the metadata librarian.
-4. This is the folder the metadata librarian will move the files to when they are ready to be ingested.
-5. This folder's naming convention is the PID of the parent, note the colon is replaced with 2 underscores.
-                  └── islandora__bookCollection
-                                 ^^^^^^^^^^^^^^ Name of the parent (PID)
-6. This folder's naming convention is the content model (cModel) of the content being ingested.
-          Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
-                       └── book
-7. Folder is ignored (name it whatever you want), this folder used to encapsulated a book object for processing. Eveything in this folder is attempted to ingest and can cause a failure if not folder structure isn't followed.
-7a. YAML file to generate MODS
-8. Is the folder for the first page
-  a) Folders must be sequental
-  a) Folders must start with 1 or 1 with leading zeros (example: 000001)
-9. Inside page folder there must be and OBJ file with either the tif or jp2 extension (OBJ.tif)
-    a) OBJ should be capital (this script will correct if not)
-    a) Extension should be lowercase (this script will correct if not)
-10. Is the OCR for this page (OPTIONAL)
-11. PDF generated for display (this is the PDF-UA accessable version)
-12. The original PDF for preservation.
-13. Book level MODS for the book. Minimal information will be pasted to the pages.
-14. Basic image example
-15. Basic image (JPG, bmp, gif, png)
-16. MODS file for the basic image. Must match the naming convention for the accompanied basic image file.
-    a) Example SunFlowers.jpg must have a MODS file by the same name SunFlowers.xml
-17. Large image example
-15. Large image (tif, jp2)
-16. MODS file for the large image. Must match the naming convention for the accompanied large image file.
-        a) Example 001001.tif must have a MODS file by the same name 001001.xml
 
 
 
@@ -99,6 +41,9 @@ cat << "EOF"
 
 
 EOF
+echo -e "\n\n\n+---------------------------------------------------------------------------------------------------+"
+echo "Date: $TODAY                     Host:$HOST"
+echo -e "+---------------------------------------------------------------------------------------------------+\n\n"
 
 # Auto correct common mistakes.
 # ------------------------------------------------------------------------------
@@ -125,9 +70,6 @@ fi
 # Cleanup incase of an OSX or Windows mounts create hidden files.
 find . -type f -name '*.DS_Store' -ls -delete
 find . -type f -name 'Thumbs.db' -ls -delete
-
-# Find and correct spaces in the filename.
-find ./automated_ingesting/2_ready_for_processing/ -type f -name "* *" | while read file; do mv "$file" ${file// /}; done
 
 # Rename tiff to tif
 find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
@@ -166,13 +108,16 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
 
     # Look for unexpected files inside of the ready_to_process folder
     EXTRA_FILES_FOUND=$(find $FOLDER/* -maxdepth 0 -name \* -and -type f | wc -l)
+
     # Look for unexpected files inside of the collection folder.
     EXTRA_FILES_FOUND=$(( $EXTRA_FILES_FOUND + $(find $FOLDER/*/* -maxdepth 0 -name \* ! -iname "*.yml" -and -type f | wc -l)))
+
     if [[ $EXTRA_FILES_FOUND > 0 ]]; then
       # If extra files were found echo a message to a file by the collection name in the errors folder.
       [[ ! -e automated_ingesting/3_errors/$(basename ${FOLDER}).txt ]] && touch automated_ingesting/3_errors/$(basename ${FOLDER}).txt
       echo -e "${EXTRA_FILES_FOUND} Extra files found in $(basename ${FOLDER})" >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
     fi
+
     # Verify the folder's naming convention matches the content model names.
     for SUBFOLDER in $FOLDER/*; do
       case "$(basename $SUBFOLDER)" in
@@ -188,8 +133,14 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
       esac
     done # End of SUBFOLDER loop
 
+    # Create MODS and validate.
     for YML_FILE in $FOLDER/*/*.yml; do
       ./create_mods.sh "${YML_FILE%.yml}" "${FOLDER}"
+    done
+
+    # Create the DC files for each page directory.
+    for PAGE_FOLDER in $FOLDER/*/*/*/; do
+      ./create_dc.sh "${PAGE_FOLDER}" "${FOLDER}"
     done
 
     # Page level directory checks.
@@ -213,13 +164,6 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
       fi
     done # end of for PAGE_FOLDER loop
 
-    # Files to expect inside a page directory.
-    # ------------------------------------------------------------------------------
-    for INSIDE_OF_PAGE_FOLDER in $FOLDER/*/*/*/*; do
-      if [[ ! "$(basename ${INSIDE_OF_PAGE_FOLDER})" =~ ^OBJ.*|^OCR.*|^PDF.pdf ]]; then
-        echo -e "Unexpected file \n\t${INSIDE_OF_PAGE_FOLDER}\n"  >> automated_ingesting/3_errors/$(basename ${FOLDER}).txt
-      fi
-    done
   fi
 
   # Check if folder is named correctly.
@@ -359,9 +303,13 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
       # ------------------------------------------------------------------------
       if [[ -d ${collection}basic ]]; then
         if [ "$(ls -A ${collection}basic)" ]; then
+
           basic_img_namespace="${basename_of_collection#*__}"
           basic_img_target="$(pwd)/${collection}basic"
           basic_img_parent="${basename_of_collection//__/:}"
+
+          # Find and correct spaces in the filename.
+          find $basic_img_target -type f -name "* *" | while read file; do mv "$file" ${file// /}; done
 
           # Check images have pairs
           echo "start ${collection}basic"
@@ -417,6 +365,9 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
           large_image_namespace="${basename_of_collection#*__}"
           large_image_target="$(pwd)/${collection}large_image/"
           large_image_parent="${basename_of_collection//__/:}"
+
+          # Find and correct spaces in the filename.
+          find $large_image_target -type f -name "* *" | while read file; do mv "$file" ${file// /}; done
 
           # Check Large images have pairs
           large_image_file_count=$(ls ${collection}large_image | egrep '\.tif$|\.jp2$' | wc -l)

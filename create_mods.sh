@@ -1,7 +1,12 @@
 #!/bin/bash
 
+# $1 is the folder ie. ../islandora__bookCollection/book/issue1/
+# $2 is the parent collection folder ie. islandora__bookCollection
+
 # Remove previous file
 [[ -f /tmp/MODS.xml ]] && rm -f /tmp/MODS.xml
+[[ -f /tmp/$(basename ${1%.*})_MODS.xml ]] && rm -f /tmp/$(basename ${1%.*})_MODS.xml
+[[ -f "${1%.*}/MODS.xml" ]] && rm -f "${1%.*}/MODS.xml"
 
 # Parce the yaml file for values
 function parse_yaml {
@@ -20,29 +25,19 @@ function parse_yaml {
       }
    }'
 }
+
 # Pulls the yaml values for the book issue in as variables.
 eval $(parse_yaml "${1}.yml")
+
 # Pulls the default collection yaml values for the book issue in as variables.
-eval $(parse_yaml "collection_templates/$(basename ${2}).yml")
-
-# build the mods file
-modsfile=$(cat <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <titleInfo>
-    <title>${mods_title}</title>
-    <subTitle>${mods_subTitle}</subTitle>
-  </titleInfo>
-  <typeOfResource>text</typeOfResource>
-  <originInfo>
-    <dateIssued>${mods_dateIssued}</dateIssued>
-    <issuance>monographic</issuance>
-    <publisher>University of Tennessee Knoxville</publisher>
-  </originInfo>
-  <note>${mods_notes}</note>
-</mods>
+compiled=$(eval "cat <<EOF
+$(<collection_templates/$(basename ${2}).xml)
 EOF
-)
+" 2> /dev/null)
+echo $compiled > "/tmp/$(basename ${1%.*})_MODS.xml"
 
-# creates the MODS file
-echo "$modsfile" > "${1%.*}/MODS.xml"
+# Format it correctly.
+xmllint -format -recover "/tmp/$(basename ${1%.*})_MODS.xml" > "${1%.*}/MODS.xml"
+
+# Validate against MODS 3.5
+xmllint --noout --xinclude --schema http://www.loc.gov/standards/mods/v3/mods-3-5.xsd "${1%.*}/MODS.xml" 2>&1 >/dev/null || echo -e "YML and/or MODS file is invalid (MODS 3.5) for \n\t ${1%.*}/MODS.xml" >> automated_ingesting/3_errors/$(basename ${2}).txt
