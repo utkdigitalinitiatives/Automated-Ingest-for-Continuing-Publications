@@ -1,10 +1,10 @@
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.5" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
-    <identifier type="filename">HikingClubHandbook_DATE</identifier>
+    <identifier type="filename">HikingClubHandbook_ | ${mods_dateIssued}</identifier>
     <titleInfo>
-        <title>${mods_title} | Handbook of the Smoky Mountains Hiking Club</title>
+        <title>${mods_title}</title>
     </titleInfo>
     <titleInfo type="alternative">
-        <title>Handbook | ${mods_title} | Smoky Mountains Hiking Club</title>
+        <title>Handbook | ${mods_Issued} | : Smoky Mountains Hiking Club</title>
     </titleInfo>
     <abstract>Annual handbook which outlines the Smoky Mountains Hiking Club's schedule of hikes and social events for the year. Includes membership roster and lists committee members.</abstract>
     <originInfo>
@@ -37,7 +37,7 @@
         </name>
     </subject>
     <subject>
-        <geographic authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh85057008">Great Smoky Mountains</geographic>
+        <geographic authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh85057008">Great Smoky Mountains (N.C. and Tenn.)</geographic>
         <cartographics>
             <coordinates>35.58343, -83.50822</coordinates>
         </cartographics>
@@ -46,7 +46,7 @@
         <languageTerm authority="iso639-2b" type="text">English</languageTerm>
     </language>
     <typeOfResource>text</typeOfResource>
-    <classification>SOMETHING HERE</classification>
+    <classification authority="lcc">F442.1 .S5</classification>
     <relatedItem displayLabel="Project" type="host">
         <titleInfo>
             <title>Smoky Mountains Hiking Club Handbooks</title>
@@ -58,7 +58,6 @@
         </physicalLocation>
     </location>
     <recordInfo>
-        <recordContentSource/>
         <languageOfCataloging>
             <languageTerm authority="iso639-2b" type="text">English</languageTerm>
         </languageOfCataloging>
