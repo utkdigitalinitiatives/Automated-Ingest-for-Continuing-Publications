@@ -2,6 +2,7 @@
 
 # $1 is the folder ie. ../islandora__bookCollection/book/issue1/
 # $2 is the parent collection folder ie. islandora__bookCollection
+cd ${3}
 
 # Remove previous file
 [[ -f /tmp/MODS.xml ]] && rm -f /tmp/MODS.xml
@@ -31,7 +32,7 @@ eval $(parse_yaml "${1}.yml")
 
 # Pulls the default collection yaml values for the book issue in as variables.
 compiled=$(eval "cat <<EOF
-$(<collection_templates/$(basename ${2}).xml)
+$(<${3}/Automated-Ingest-for-Continuing-Publications/collection_templates/$(basename ${2}).xml)
 EOF
 " 2> /dev/null)
 echo $compiled > "/tmp/$(basename ${1%.*})_MODS.xml"
@@ -40,4 +41,6 @@ echo $compiled > "/tmp/$(basename ${1%.*})_MODS.xml"
 xmllint -format -recover "/tmp/$(basename ${1%.*})_MODS.xml" > "${1%.*}/MODS.xml"
 
 # Validate against MODS 3.5
-xmllint --noout --xinclude --schema http://www.loc.gov/standards/mods/v3/mods-3-5.xsd "${1%.*}/MODS.xml" 2>&1 >/dev/null || echo -e "YML and/or MODS file is invalid (MODS 3.5) for \n\t ${1%.*}/MODS.xml" >> automated_ingesting/3_errors/$(basename ${2}).txt
+xmllint --noout --xinclude --schema http://www.loc.gov/standards/mods/v3/mods-3-5.xsd "${1%.*}/MODS.xml" 2>&1 >/dev/null || echo -e "YML and/or MODS file is invalid (MODS 3.5) for \n\t ${1%.*}/MODS.xml" >> "${3}/3_errors/$(basename ${2}).txt"
+
+cd -
