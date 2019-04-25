@@ -24,6 +24,6 @@ echo $compiled > "/tmp/$(basename ${1%.*})_MODS.xml"
 xmllint -format -recover "/tmp/$(basename ${1%.*})_MODS.xml" > "${1%.*}/MODS.xml"
 
 # Validate against MODS 3.5
-xmllint --noout --xinclude --schema http://www.loc.gov/standards/mods/v3/mods-3-5.xsd "${1%.*}/MODS.xml" 2>&1 >/dev/null || echo -e "YML and/or MODS file is invalid (MODS 3.5) for \n\t ${1%.*}/MODS.xml" >> "${3}/3_errors/$(basename ${2}).txt"
+xmllint --noout --xinclude --schema "/tmp/mods-3-5.xsd" "${1%.*}/MODS.xml" 2>&1 >/dev/null || echo -e "YML and/or MODS file is invalid (MODS 3.5) for \n\t ${1%.*}/MODS.xml" >> "${3}/3_errors/$(basename ${2}).txt"
 
 cd -

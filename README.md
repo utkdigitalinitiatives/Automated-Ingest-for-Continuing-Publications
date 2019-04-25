@@ -46,6 +46,7 @@ The script is intended to be run as part of a cron job but can be done manually.
               │           │   ├── 3
               │           │   │   └── OBJ.tif
 8             │           │   ├── ORIGINAL.pdf
+8a            │           │   ├── ORIGINAL_EDITED.pdf
 9             │           │   └── PDF.pdf
 10            │           └── issue1.yml
 11            ├── 3_errors
@@ -73,6 +74,7 @@ The script is intended to be run as part of a cron job but can be done manually.
 7a. Is the OCR for the tif (OPTIONAL). Readme more https://www.ibm.com/support/knowledgecenter/ca/SSEPGG_9.7.0/com.ibm.db2.luw.admin.dm.doc/doc/r0004663.html
 
 8. Original.pdf (OPTIONAL) is the PDF that was originally created and not accessibly compliant for online access.
+8a. ORIGINAL_EDITED.pdf, in case changes were made to the ORIGINAL.pdf but aren't suitable for online viewing (like PDF/UA).
 9. PDF generated for display (this is the PDF-UA accessible version)
 10. YAML file to generate MODS for book object.
 11. 3_errors is the folder where collection level will be moved to when an error is detected.

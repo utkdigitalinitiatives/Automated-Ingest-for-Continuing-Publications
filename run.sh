@@ -12,6 +12,12 @@ HOST=$(hostname)
 DRUSH=$(which drush)
 TEST_RUN=true
 
+# Download xsd schema
+[ -f /tmp/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "/tmp/oai_dc.xsd"
+[ -f /tmp/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "/tmp/mods-3-5.xsd"
+[ -f /tmp/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "/tmp/simpledc20021212.xsd"
+sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#/tmp/simpledc20021212.xsd#g' /tmp/oai_dc.xsd
+
 three_errors="${WORKING_HOME_DIR}/automated_ingesting/3_errors"
 two_ready_for_processing="${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing"
 four_completed="${WORKING_HOME_DIR}/automated_ingesting/4_completed"
@@ -152,8 +158,17 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
      /bin/bash ${CURRENT_DIR}/create_mods.sh "${WORKING_HOME_DIR}/${YML_FILE%.yml}" "${FOLDER}" "${WORKING_HOME_DIR}"
    done
    # Create the DC files for each page directory.
+   COUNTER=0
    for PAGE_FOLDER in $FOLDER/*/*/*/; do
      /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${CURRENT_DIR}/${FOLDER}" "${WORKING_HOME_DIR}"
+     let COUNTER=COUNTER+1
+     echo "Counter = $COUNTER"
+     sleep .5
+     if [[ $COUNTER -gt 30 ]]; then
+        sleep 10
+        let COUNTER=0
+      fi
+
    done
    cd -
    # Page level directory checks.
@@ -286,7 +301,7 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
              mkdir -p /tmp/pdfs_edited
              # Pulls the PID from the filename of the xxxxx_ORIGINAL.pdf
              [[ -f "${f}/ORIGINAL.pdf" ]] && cp "${f}/ORIGINAL.pdf" "/tmp/pdfs/${PARENT_SID//:/_}_ORIGINAL.pdf"
-             [[ -f "${f}/ORIGINAL.pdf" ]] && cp "${f}/ORIGINAL_EDITED.pdf" "/tmp/pdfs_edited/${PARENT_SID//:/_}_ORIGINAL_EDITED.pdf"
+             [[ -f "${f}/ORIGINAL_EDITED.pdf" ]] && cp "${f}/ORIGINAL_EDITED.pdf" "/tmp/pdfs_edited/${PARENT_SID//:/_}_ORIGINAL_EDITED.pdf"
            done
 
            # Ingest ORIGINAL PDF file in /tmp/pdfs to their corresponding pid.
@@ -295,14 +310,14 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
              ADMIN_FAILURES=1
            fi
            # Ingest ORIGINAL_EDITED PDF file in /tmp/pdfs to their corresponding pid.
-           if [[ !  $($DRUSH -u 1 --root=/var/www/drupal --uri=http://localhost -y islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs_edited --datastreams_label="Original Edited") ]]; then
+           if [[ !  $($DRUSH -u 1 --root=/var/www/drupal --uri=http://localhost -y islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs_edited --datastreams_label="Original_Edited") ]]; then
              $(echo -e "Problem with ingesting $PARENT_SID ORIGINAL_EDITED.pdf. \n\tThis will need to be done manually or remove $PARENT_SID and try again." >> /tmp/automated_ingestion.log)
              ADMIN_FAILURES=1
            fi
 
            # clean out ORIGINAL.pdf files
            rm -rf /tmp/pdfs
-           rm -rf /tmp/pdfs_edited
+           # rm -rf /tmp/pdfs_edited
 
            msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
            msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
@@ -478,6 +493,10 @@ for collection in automated_ingesting/2_ready_for_processing/*/; do
 
  fi # End/Else of error log check
 done # End of for collection
+
+# Cleanup
+rm -f /tmp/oai_dc.xsd
+rm -f /tmp/mods-3-5.xsd
 
 TODAY=$(date)
 HOST=$(hostname)

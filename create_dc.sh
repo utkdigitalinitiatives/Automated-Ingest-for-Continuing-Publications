@@ -24,6 +24,6 @@ xmllint -format -recover "/tmp/${page_folder}_DC.xml" > "${1}DC.xml"
 rm -f "/tmp${page_folder}_DC.xml"
 
 # Validate against OAI 2.0
-xmllint --noout --xinclude --schema http://www.openarchives.org/OAI/2.0/oai_dc.xsd "${1}/DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t ${1}/DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
+xmllint --noout --xinclude --schema "/tmp/oai_dc.xsd" "${1}/DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t ${1}/DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
 cd -
