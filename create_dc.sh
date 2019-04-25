@@ -7,6 +7,8 @@ cd ${3}
 
 # Folder name (aka page number)
 page_folder=$(basename ${1})
+# Removes leading zeros from string.
+page_folder=$((10#$page_folder))
 
 compiled=$(eval "cat <<EOF
 $(<${3}/Automated-Ingest-for-Continuing-Publications/collection_templates/page_example_DC.xml)

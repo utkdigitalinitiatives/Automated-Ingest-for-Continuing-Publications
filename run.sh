@@ -4,7 +4,6 @@ command -v xmllint >/dev/null 2>&1 || { echo -e >&2 "\n\n\n\tI require xmllint b
 
 DRUPAL_HOME_DIR="/var/www/drupal"
 WORKING_HOME_DIR="/vagrant"
-
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 clear
@@ -13,9 +12,9 @@ HOST=$(hostname)
 DRUSH=$(which drush)
 TEST_RUN=true
 
-three_errors="${WORKING_HOME_DIR}/3_errors"
-two_ready_for_processing="${WORKING_HOME_DIR}/2_ready_for_processing"
-four_completed="${four_completed}"
+three_errors="${WORKING_HOME_DIR}/automated_ingesting/3_errors"
+two_ready_for_processing="${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing"
+four_completed="${WORKING_HOME_DIR}/automated_ingesting/4_completed"
 
 cd $WORKING_HOME_DIR
 
@@ -69,6 +68,7 @@ elif [ -f automated_ingesting/2_ready_for_processing/*.* ]; then
 fi
 if [[ ! -d ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud ]]; then
  echo "islandora_datastream_crud isn't installed. ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud"
+ echo -e "\t cd /var/www/drupal/sites/all/modules/ \n\tgit clone https://github.com/SFULibrary/islandora_datastream_crud\n\tdrush en -y islandora_datastream_crud"
  exit
 fi
 
@@ -146,11 +146,13 @@ for FOLDER in automated_ingesting/2_ready_for_processing/*; do
    # Create MODS and validate.
    cd ${WORKING_HOME_DIR}
    for YML_FILE in $FOLDER/*/*.yml; do
+     if [[ $(/bin/bash ${CURRENT_DIR}/check_yaml.sh $YML_FILE) == "fail" ]];  then
+       echo -e >&2 "\n\n\n\tYAML file didn't pass checks. Empty value detected.\n\n\n" >> "${three_errors}/$(basename ${FOLDER}).txt"
+     fi
      /bin/bash ${CURRENT_DIR}/create_mods.sh "${WORKING_HOME_DIR}/${YML_FILE%.yml}" "${FOLDER}" "${WORKING_HOME_DIR}"
    done
    # Create the DC files for each page directory.
    for PAGE_FOLDER in $FOLDER/*/*/*/; do
-     echo "xxx--> .${CURRENT_DIR}/create_dc.sh ${WORKING_HOME_DIR}/${PAGE_FOLDER} | ${FOLDER} | ${CURRENT_DIR}"
      /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${CURRENT_DIR}/${FOLDER}" "${WORKING_HOME_DIR}"
    done
    cd -
