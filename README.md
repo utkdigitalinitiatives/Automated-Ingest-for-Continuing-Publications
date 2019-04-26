@@ -1,4 +1,4 @@
-# Automated Ingest for Continuing Publications
+# Automated Ingest for Continuing Publications (BETA)
 This is a script for automating the final checks and ingestion of books, large images and basic images into existing collections. Some collections like "Continuing Publications" frequently need to have an object (book, large image, basic image) ingested. This process can be repetitive and can be automated.
 
 This uses a combination of folder names and YAML files to determine parent collection, content models and page names. When an issue is triggered a process is run to notify the user of the issue and stops the process for the ingest in a way that doesn't block other ingestions.
