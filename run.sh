@@ -212,7 +212,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         fi
         unset count_obj_in_folder
 
-        # /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${CURRENT_DIR}/${FOLDER}" "${WORKING_HOME_DIR}"
+        /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${CURRENT_DIR}/${FOLDER}" "${WORKING_HOME_DIR}"
         let COUNTER=COUNTER+1
         echo "Counter = $COUNTER"
         sleep $seconds_to_slowdown_validation
@@ -340,7 +340,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 rsync -avz "${WORKING_HOME_DIR}/${D}" "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
 
                 # Book queuing for ingestion.
-                $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --create_pdfs=false --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
                 sid_value=$(cat /tmp/automated_ingestion.log | head -2 | tail -1)
 
                 # Locating parent PID.
@@ -381,7 +381,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
-
+              rm -f /tmp/automated_ingestion.log
               if [[ $msg ]]; then
                 echo -e "We have an error with the ingestion process\n\n$msg" >> ${three_errors}/$(basename ${collection}).txt
                 let FAILURES=FAILURES+1
