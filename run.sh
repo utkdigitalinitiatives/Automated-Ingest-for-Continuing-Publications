@@ -2,8 +2,8 @@
 TEST_RUN=false
 
 # W3 times out during validation
-seconds_to_slowdown_validation=0
-seconds_for_a_pause_validation=0
+seconds_to_slowdown_validation=.5
+seconds_for_a_pause_validation=1
 
 clear
 
