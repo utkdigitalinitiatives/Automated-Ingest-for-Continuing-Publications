@@ -165,3 +165,11 @@ Large Image
                       ├── 001003.jp2   <─┐
                       └── 001003.xml     └── Matching jp2 & MODS names
 ```
+
+
+## To dos
+* Check the integrity of the image file prior to ingest.
+* Check that each page's URL renders/returns a valid image.
+  * Hash the original page image and compare it to the online version.
+* Check that title matches the title on the book page.
+* Check that the total number of pages match the total number of directories for that issue.
