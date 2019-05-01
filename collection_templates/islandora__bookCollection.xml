@@ -1,10 +1,10 @@
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.5" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
-    <identifier type="filename">HikingClubHandbook_ | ${mods_dateIssued}</identifier>
+    <identifier type="filename">HikingClubHandbook_${mods_dateIssued}</identifier>
     <titleInfo>
         <title>${mods_title}</title>
     </titleInfo>
     <titleInfo type="alternative">
-        <title>Handbook | ${mods_Issued} | : Smoky Mountains Hiking Club</title>
+        <title>Handbook ${mods_Issued}: Smoky Mountains Hiking Club</title>
     </titleInfo>
     <abstract>Annual handbook which outlines the Smoky Mountains Hiking Club's schedule of hikes and social events for the year. Includes membership roster and lists committee members.</abstract>
     <originInfo>
