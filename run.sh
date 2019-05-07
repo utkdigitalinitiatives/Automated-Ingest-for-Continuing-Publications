@@ -13,16 +13,48 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
+three_errors="${WORKING_HOME_DIR}/automated_ingesting/3_errors"
+two_ready_for_processing="${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing"
+four_completed="${WORKING_HOME_DIR}/automated_ingesting/4_completed"
+
+INGESTION_STARTED=0
+WORKING_TMP=0
+WORKING_TMP_DIR=""
+
+# In case process is terminated.
+function cleanup_files {
+  [ -f '/tmp/oai_dc.xsd' ] && rm -f /tmp/oai_dc.xsd
+  [ -f '/tmp/mods-3-5.xsd' ] && rm -f /tmp/mods-3-5.xsd
+  [ -f '/tmp/simpledc20021212.xsd' ] && rm -f /tmp/simpledc20021212.xsd
+  [ -f '/tmp/*_MODS.xml' ] && rm -rf /tmp/*_MODS.xml
+  echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
+  [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
+  [ $INGESTION_STARTED == 0 ] || mv "${INGESTION_STARTED}" "${three_errors}/"
+  [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
+
+}
+
+trap cleanup_files EXIT
+if [ ! -d "${DRUPAL_HOME_DIR}" ]; then
+   echo "No drupal"
+   exit
+fi
+
+size_needed=$(du -s "/vagrant/automated_ingesting/2_ready_for_processing" | cut -f 1 -d "/")
+size_available=$(df --output=avail -B 1 "/" |tail -n 1)
+if [[ $size_needed -gt $size_available ]]; then
+  echo "Not enough space available to process"
+  exit
+fi
+
 
 # Download xsd schema
 [ -f /tmp/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "/tmp/oai_dc.xsd"
 [ -f /tmp/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "/tmp/mods-3-5.xsd"
 [ -f /tmp/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "/tmp/simpledc20021212.xsd"
-sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#/tmp/simpledc20021212.xsd#g' /tmp/oai_dc.xsd
 
-three_errors="${WORKING_HOME_DIR}/automated_ingesting/3_errors"
-two_ready_for_processing="${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing"
-four_completed="${WORKING_HOME_DIR}/automated_ingesting/4_completed"
+# Replace url with string to downloaded version.
+sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#/tmp/simpledc20021212.xsd#g' /tmp/oai_dc.xsd
 
 cd $WORKING_HOME_DIR
 
@@ -78,25 +110,6 @@ command -v xmllint >/dev/null 2>&1 || { echo -e >&2 "\n\n\n\tI require xmllint b
 
 command -v xmllint >/dev/null 2>&1 || { echo -e >&2 "\n\txmllint install failed. Aborting.\n\n\n\n"; exit 1;}
 
-# Check if islandora_datastream_crud is installed and install if not.
-if [[ ! -d ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud ]]; then
-  echo -e "\n\nislandora_datastream_crud isn't installed. ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud\n\n\tDo you wish to install this module?"
-  select yn in "Yes" "No"; do
-    case $yn in
-      Yes ) cd /var/www/drupal/sites/all/modules/
-        git clone https://github.com/SFULibrary/islandora_datastream_crud
-        drush en -y islandora_datastream_crud
-        cd $WORKING_HOME_DIR
-        break ;;
-      No ) exit ;;
-    esac
-  done
-  echo -e "\t To manually achieve this\n\tcd /var/www/drupal/sites/all/modules/ \n\t git clone https://github.com/SFULibrary/islandora_datastream_crud\n\tdrush en -y islandora_datastream_crud\n\n"
-  # See if it actually installed.
-  sleep 2
-  [[ ! -d ${DRUPAL_HOME_DIR}/sites/all/modules/islandora_datastream_crud ]] && exit
-fi
-
 # Auto correct common mistakes.
 # ------------------------------------------------------------------------------
 
@@ -127,7 +140,6 @@ find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
 system_ready=$(ps aux 2>/dev/null |grep islandora_batch_ingest 2>/dev/null |wc -l)
 if (( $system_ready == '0' || $system_ready == '1')); then
   sleep 5
-
   # Loop through the collections
   # ------------------------------------------------------------------------------
   for FOLDER in automated_ingesting/2_ready_for_processing/*; do
@@ -268,9 +280,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
     unset msg
     basename_of_collection=$(basename ${collection})
     # clean out old files
-    echo "" > /tmp/automated_ingestion_for_${basename_of_collection}.log
     echo "" > /tmp/automated_ingestion.log
-    rm -rf /tmp/pdfs
 
     ADMIN_FAILURES=0
     FAILURES=0
@@ -337,10 +347,25 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               for D in ${collection}book/*/; do
                 target="/tmp/$(basename $FOLDER)_$(basename $D)"
                 mkdir -p "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+                let WORKING_TMP=1
+                WORKING_TMP_DIR="/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+
                 rsync -avz "${WORKING_HOME_DIR}/${D}" "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+                if [ "$?" -eq "0" ]; then
+                  echo "Done"
+                else
+                  echo "Error while running copying files from ${WORKING_HOME_DIR}/${D} to /tmp/$(basename $FOLDER)_$(basename $D)/issue1/" >> ${three_errors}/$(basename ${collection}).txt
+                  exit
+                fi
+
+                INGESTION_STARTED="${collection}"
 
                 # Book queuing for ingestion.
                 $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+
+                # removes blank lines
+                sed -i '/^$/d' /tmp/automated_ingestion.log
+
                 sid_value=$(cat /tmp/automated_ingestion.log | head -2 | tail -1)
 
                 # Locating parent PID.
@@ -349,39 +374,18 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 # Ingesting book
                 $($DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
-                # Only works with one book at a time.
-                for f in ${collection}book/*; do
-                  mkdir -p /tmp/pdfs
-                  mkdir -p /tmp/pdfs_edited
-                  # Pulls the PID from the filename of the xxxxx_ORIGINAL.pdf
-                  [[ -f "${f}/ORIGINAL.pdf" ]] && cp "${f}/ORIGINAL.pdf" "/tmp/pdfs/${PARENT_SID//:/_}_ORIGINAL.pdf"
-                  [[ -f "${f}/ORIGINAL_EDITED.pdf" ]] && cp "${f}/ORIGINAL_EDITED.pdf" "/tmp/pdfs_edited/${PARENT_SID//:/_}_ORIGINAL_EDITED.pdf"
-                done
-
-                # Ingest ORIGINAL PDF file in /tmp/pdfs to their corresponding pid.
-                if [[ !  $($DRUSH -u 1 --root=/var/www/drupal --uri=http://localhost -y islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs --datastreams_label="Original") ]]; then
-                  $(echo -e "Problem with ingesting $PARENT_SID ORIGINAL.pdf. \n\tThis will need to be done manually or remove $PARENT_SID and try again." >> /tmp/automated_ingestion.log)
-                  ADMIN_FAILURES=1
-                fi
-                # Ingest ORIGINAL_EDITED PDF file in /tmp/pdfs to their corresponding pid.
-                if [[ !  $($DRUSH -u 1 --root=/var/www/drupal --uri=http://localhost -y islandora_datastream_crud_push_datastreams --datastreams_source_directory=/tmp/pdfs_edited --datastreams_label="Original_Edited") ]]; then
-                  $(echo -e "Problem with ingesting $PARENT_SID ORIGINAL_EDITED.pdf. \n\tThis will need to be done manually or remove $PARENT_SID and try again." >> /tmp/automated_ingestion.log)
-                  ADMIN_FAILURES=1
-                fi
-
                 unset target
-                # clean out ORIGINAL.pdf files
-                rm -rf /tmp/pdfs
-                rm -rf /tmp/pdfs_edited
                 rm -rf "/tmp/$(basename $FOLDER)_$(basename $D)"
-
+                let WORKING_TMP=0
+                WORKING_TMP_DIR=""
+                let INGESTION_STARTED=0
               done
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
+              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
-              rm -f /tmp/automated_ingestion.log
+
               if [[ $msg ]]; then
                 echo -e "We have an error with the ingestion process\n\n$msg" >> ${three_errors}/$(basename ${collection}).txt
                 let FAILURES=FAILURES+1
@@ -390,6 +394,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 echo "PID: ${sid_value}"
               fi
               unset msg
+              rm -f /tmp/automated_ingestion.log
             fi
           fi
         fi
@@ -433,11 +438,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             if [[ ! $TEST_RUN == true ]]; then
               echo "" > /tmp/automated_ingestion.log
               echo "Basic -----> $basic_img_parent"
+              INGESTION_STARTED="${collection}"
               # Basic Image queuing for ingestion.
               $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
+              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
 
@@ -447,6 +453,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               else
                 echo "Success!"
                 echo -e "Basic Image objects ingested\n\n"
+                let INGESTION_STARTED=0
               fi
               unset msg
             fi
@@ -486,12 +493,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
               echo "" > /tmp/automated_ingestion.log
-
+              INGESTION_STARTED="${collection}"
               # Large Image queuing for ingestion.
               $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception: Bad Batch.*?(\n(?=\s).*?)*$')
+              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
 
@@ -502,7 +509,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 echo "Success!"
                 echo -e "Basic Image objects ingested\n\n"
               fi
-
+              let INGESTION_STARTED=0
             fi
           fi
         fi
@@ -553,10 +560,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
   done # End of for collection
 
   # Cleanup
-  rm -f /tmp/oai_dc.xsd
-  rm -f /tmp/mods-3-5.xsd
-  rm -f /tmp/simpledc20021212.xsd
-  rm -rf /tmp/*_MODS.xml
+  cleanup_files
 else
   echo "Another ingest is running. Aborting."
 fi
