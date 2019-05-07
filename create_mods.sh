@@ -10,7 +10,7 @@ cd ${3}
 [[ -f "${1%.*}/MODS.xml" ]] && rm -f "${1%.*}/MODS.xml"
 
 # Pulls the yaml values for the book issue in as variables.
-yaml_values_for_book=$(/bin/bash ${3}/Automated-Ingest-for-Continuing-Publications/parse_yaml.sh "${1}.yml")
+[ -f "${1}.yml" ] && yaml_values_for_book=$(/bin/bash ${3}/Automated-Ingest-for-Continuing-Publications/parse_yaml.sh "${1}.yml")
 eval $yaml_values_for_book
 
 # Pulls the default collection yaml values for the book issue in as variables.
