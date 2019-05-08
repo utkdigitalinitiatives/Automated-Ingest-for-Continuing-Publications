@@ -369,12 +369,18 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
                 sid_value=$(cat /tmp/automated_ingestion.log | head -1 | tail -1)
 
-                # Locating parent PID.
-                [[ $sid_value ]] && PARENT_SID=$($DRUSH -v --root=/var/www/drupal sql-query --db-prefix "SELECT parent FROM islandora_batch_queue WHERE sid=${sid_value}" | grep "[:]" | head -1)
-
                 # Ingesting book
                 $($DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
+                # Locating parent PID.
+                QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
+                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=/var/www/drupal sql-query --db-prefix "${QU1}" | grep "[:]")
+                BATCH_PIDS=(${BATCH_PIDS//\\n/ })
+                for i in "${BATCH_PIDS[@]}"
+                do
+                  PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "http://localhost:8000/islandora/object/${i}/datastream/OBJ/view")
+                  [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
+                done
                 unset target
                 rm -rf "/tmp/$(basename $FOLDER)_$(basename $D)"
                 let WORKING_TMP=0
