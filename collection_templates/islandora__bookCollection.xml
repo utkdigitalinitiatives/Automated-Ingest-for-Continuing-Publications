@@ -4,7 +4,7 @@
         <title>${mods_title}</title>
     </titleInfo>
     <titleInfo type="alternative">
-        <title>Handbook ${mods_Issued}: Smoky Mountains Hiking Club</title>
+        <title>Handbook ${mods_dateIssued}: Smoky Mountains Hiking Club</title>
     </titleInfo>
     <abstract>Annual handbook which outlines the Smoky Mountains Hiking Club's schedule of hikes and social events for the year. Includes membership roster and lists committee members.</abstract>
     <originInfo>
