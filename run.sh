@@ -31,7 +31,8 @@ function cleanup_files {
   [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
   [ $INGESTION_STARTED == 0 ] || mv "${INGESTION_STARTED}" "${three_errors}/"
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
-
+  rm -rf /tmp/*_MODS.xml
+  rm -rf /tmp/*_DC.xml
 }
 
 trap cleanup_files EXIT
@@ -366,7 +367,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 # removes blank lines
                 sed -i '/^$/d' /tmp/automated_ingestion.log
 
-                sid_value=$(cat /tmp/automated_ingestion.log | head -2 | tail -1)
+                sid_value=$(cat /tmp/automated_ingestion.log | head -1 | tail -1)
 
                 # Locating parent PID.
                 [[ $sid_value ]] && PARENT_SID=$($DRUSH -v --root=/var/www/drupal sql-query --db-prefix "SELECT parent FROM islandora_batch_queue WHERE sid=${sid_value}" | grep "[:]" | head -1)
