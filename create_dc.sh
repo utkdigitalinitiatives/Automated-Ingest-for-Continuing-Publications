@@ -10,13 +10,13 @@ cd ${3}
 page_folder=$(basename ${1})
 # Removes leading zeros from string.
 page_folder=$((10#$page_folder))
-
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Pulls the yaml values for the book issue in as variables.
-[ -f "$(dirname ${1}).yml" ] && yaml_values_for_book=$(/bin/bash "${3}/Automated-Ingest-for-Continuing-Publications/parse_yaml.sh" "$(dirname ${1}).yml")
+[ -f "$(dirname ${1}).yml" ] && yaml_values_for_book=$(/bin/bash "${CURRENT_DIR}/parse_yaml.sh" "$(dirname ${1}).yml")
 eval "$(echo ${yaml_values_for_book})"
 
 compiled=$(eval "cat <<EOF
-$(<${3}/Automated-Ingest-for-Continuing-Publications/collection_templates/page_example_DC.xml)
+$(<${CURRENT_DIR}/collection_templates/page_example_DC.xml)
 EOF
 " 2> /dev/null)
 

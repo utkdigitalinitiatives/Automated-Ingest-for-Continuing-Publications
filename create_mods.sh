@@ -8,14 +8,14 @@ cd ${3}
 [[ -f /tmp/MODS.xml ]] && rm -f /tmp/MODS.xml
 [[ -f /tmp/$(basename ${1%.*})_MODS.xml ]] && rm -f /tmp/$(basename ${1%.*})_MODS.xml
 [[ -f "${1%.*}/MODS.xml" ]] && rm -f "${1%.*}/MODS.xml"
-
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Pulls the yaml values for the book issue in as variables.
-[ -f "${1}.yml" ] && yaml_values_for_book=$(/bin/bash ${3}/Automated-Ingest-for-Continuing-Publications/parse_yaml.sh "${1}.yml")
+[ -f "${1}.yml" ] && yaml_values_for_book=$(/bin/bash ${CURRENT_DIR}/parse_yaml.sh "${1}.yml")
 eval $yaml_values_for_book
 
 # Pulls the default collection yaml values for the book issue in as variables.
 compiled=$(eval "cat <<EOF
-$(<${3}/Automated-Ingest-for-Continuing-Publications/collection_templates/$(basename ${2}).xml)
+$(<${CURRENT_DIR}/collection_templates/$(basename ${2}).xml)
 EOF
 " 2> /dev/null)
 echo $compiled > "/tmp/$(basename ${1%.*})_MODS.xml"

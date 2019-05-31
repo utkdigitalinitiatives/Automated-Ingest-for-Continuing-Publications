@@ -5,10 +5,18 @@ TEST_RUN=false
 seconds_to_slowdown_validation=.5
 seconds_for_a_pause_validation=1
 
-clear
 
-DRUPAL_HOME_DIR="/var/www/drupal"
-WORKING_HOME_DIR="/vagrant"
+if [[ -z $1 || -z $2 ]]; then
+    echo -e "\n\n\t For production use:"
+    echo -e "\t\t ./run.sh /drupal/directory /path/to/folder \n"
+    echo -e "\n\t For use in vagrant:"
+    echo -e "\t\t ./run.sh /var/www/drupal /vagrant\n"
+    exit
+fi
+
+clear
+DRUPAL_HOME_DIR="${1%/}"
+WORKING_HOME_DIR="${2%/}"
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TODAY=$(date)
 HOST=$(hostname)
