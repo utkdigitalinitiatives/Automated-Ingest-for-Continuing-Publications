@@ -37,7 +37,6 @@ function cleanup_files {
   [ -f '/tmp/*_MODS.xml' ] && rm -rf /tmp/*_MODS.xml
   echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
   [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
-  [ $INGESTION_STARTED == 0 ] || mv "${INGESTION_STARTED}" "${three_errors}/"
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
   rm -rf /tmp/*_MODS.xml
   rm -rf /tmp/*_DC.xml
@@ -395,6 +394,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 WORKING_TMP_DIR=""
                 let INGESTION_STARTED=0
               done
+
+              # Known False alarms
+              sed '/java.io.FileNotFoundException:/d' /tmp/automated_ingestion.log > /tmp/automated_ingestion.log
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
