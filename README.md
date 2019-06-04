@@ -91,7 +91,10 @@ First will need to install "https://github.com/SFULibrary/islandora_datastream_c
 4) drush en -y islandora_datastream_crud
 5) cd /vagrant
 5a) edit run.sh in test mode (OPTIONAL). Change TEST_RUN to TRUE `TEST_RUN=true`. This will run everything accept the ingest and won't move the files for 2_ready_for_processing.
-6) ./run.sh
+6) ./run.sh 1 2 3
+      1. should be the path to drupal: /var/www/drupal
+      2. should be the parent path to automated_ingesting: ~/path/to/parent
+      3. URL of the main collection (OPTIONAL: defaults to localhost:8000/islandora/object)
 
 ## Using YAML
 In the folder "collection_templates is half of a MODS in YAML form"

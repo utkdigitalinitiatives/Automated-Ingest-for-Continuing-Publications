@@ -13,10 +13,16 @@ fi
 
 if [[ -z $1 || -z $2 ]]; then
     echo -e "\n\n\t For production use:"
-    echo -e "\t\t ./run.sh /drupal/directory /path/to/folder \n"
+    echo -e "\t\t ./run.sh /drupal/directory /path/to/folder http://URL_to_main_islandora_collection\n"
     echo -e "\n\t For use in vagrant:"
-    echo -e "\t\t ./run.sh /var/www/drupal /vagrant\n"
+    echo -e "\t\t ./run.sh /var/www/drupal /vagrant http://localhost:8000/islandora/object \n"
     exit
+fi
+
+if [[ -z $3 ]]; then
+  BASE_URL="http://localhost:8000/islandora/object"
+else
+  BASE_URL="${3%/}"
 fi
 
 clear
@@ -313,7 +319,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       # Check that the PID exist
       # --------------------------------------------------------------------------
 
-      status_code=$(curl --write-out %{http_code} --silent --output /dev/null "http://localhost:8000/islandora/object/${basename_of_collection/__/%3A}")
+      status_code=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${basename_of_collection/__/%3A}")
       if [[ "$status_code" -eq 200 ]] ; then
         # ------------------------------------------------------------------------
         # Book processing
