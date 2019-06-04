@@ -48,7 +48,7 @@ if [ ! -d "${DRUPAL_HOME_DIR}" ]; then
    exit
 fi
 
-size_needed=$(du -s "/vagrant/automated_ingesting/2_ready_for_processing" | cut -f 1 -d "/")
+size_needed=$(du -s "${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing" | cut -f 1 -d "/")
 size_available=$(df --output=avail -B 1 "/" |tail -n 1)
 if [[ $size_needed -gt $size_available ]]; then
   echo "Not enough space available to process"
