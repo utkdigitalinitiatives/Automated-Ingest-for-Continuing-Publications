@@ -5,6 +5,11 @@ TEST_RUN=false
 seconds_to_slowdown_validation=.5
 seconds_for_a_pause_validation=1
 
+if [[ $(uname) == "Linux" ]]; then
+  forced=''
+else
+  forced='--force '
+fi
 
 if [[ -z $1 || -z $2 ]]; then
     echo -e "\n\n\t For production use:"
@@ -172,12 +177,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
     if [[ -d $FOLDER/book ]]; then
 
       # Correct if filename for MODS/PDF is lowercase or the extension is uppercase.
-      rename --force 's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.*
-      rename --force 's/([^.]*)/\U$1/' $FOLDER/*/*/*.*
+      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.*
+      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*.*
 
       # Correct if filename for OBJ/OCR is lowercase or the extension is uppercase.
-      rename --force 's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*/*.*
-      rename --force 's/([^.]*)/\U$1/' $FOLDER/*/*/*/*.*
+      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*/*.*
+      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*/*.*
 
       # Look for unexpected files inside of the ready_to_process folder
       EXTRA_FILES_FOUND=$(find $FOLDER/* -maxdepth 0 -name \* -and -type f | wc -l)
