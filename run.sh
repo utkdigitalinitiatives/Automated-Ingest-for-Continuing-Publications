@@ -380,7 +380,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 INGESTION_STARTED="${collection}"
 
                 # Book queuing for ingestion.
-                $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=$1 -u 1 --uri=http://localhost islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
 
                 # removes blank lines
                 sed -i '/^$/d' /tmp/automated_ingestion.log
@@ -388,11 +388,11 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 sid_value=$(cat /tmp/automated_ingestion.log | head -1 | tail -1)
 
                 # Ingesting book
-                $($DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+                $($DRUSH -v -u 1 --root=$1 --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
-                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=/var/www/drupal sql-query --db-prefix "${QU1}" | grep "[:]")
+                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$1 sql-query --db-prefix "${QU1}" | grep "[:]")
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
                 for i in "${BATCH_PIDS[@]}"
                 do
@@ -468,7 +468,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
               # Basic Image queuing for ingestion.
-              $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$1 -u 1 --uri=http://localhost islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=$1 --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
@@ -523,7 +523,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               echo "" > /tmp/automated_ingestion.log
               INGESTION_STARTED="${collection}"
               # Large Image queuing for ingestion.
-              $($DRUSH -v --root=/var/www/drupal -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=/var/www/drupal --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$1 -u 1 --uri=http://localhost  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=$1 --uri=http://localhost islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
