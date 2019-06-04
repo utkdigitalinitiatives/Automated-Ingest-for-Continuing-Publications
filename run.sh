@@ -378,7 +378,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 fi
 
                 INGESTION_STARTED="${collection}"
-
+                cd $1
                 # Book queuing for ingestion.
                 $($DRUSH -v --root=$1 -u 1 --uri=$HOST islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
 
@@ -404,6 +404,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 let WORKING_TMP=0
                 WORKING_TMP_DIR=""
                 let INGESTION_STARTED=0
+                cd -
               done
 
               # Known False alarms
@@ -464,6 +465,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # Basic image ingest content
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
+              cd $1
               echo "" > /tmp/automated_ingestion.log
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
@@ -484,6 +486,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 let INGESTION_STARTED=0
               fi
               unset msg
+              cd -
             fi
           fi
         fi
@@ -522,6 +525,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             if [[ ! $TEST_RUN == true ]]; then
               echo "" > /tmp/automated_ingestion.log
               INGESTION_STARTED="${collection}"
+              cd $1
               # Large Image queuing for ingestion.
               $($DRUSH -v --root=$1 -u 1 --uri=$HOST  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=$1 --uri=$HOST islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
@@ -538,6 +542,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 echo -e "Basic Image objects ingested\n\n"
               fi
               let INGESTION_STARTED=0
+              cd -
             fi
           fi
         fi
