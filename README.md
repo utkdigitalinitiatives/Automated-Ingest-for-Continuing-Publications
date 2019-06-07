@@ -16,7 +16,9 @@ The script is intended to be run as part of a cron job but can be done manually.
 4.    │   └── page_example_DC.xml
 5.    ├── create_dc.sh
 6.    ├── create_mods.sh
-7.    └── run.sh
+7.    ├── run.sh
+8.    ├── config.cfg.defaults
+9.    └── config.cfg
 ```
 
 1. Collection templates for generating MODS
@@ -26,7 +28,8 @@ The script is intended to be run as part of a cron job but can be done manually.
 5. This is the script the uses #4's file to generate and validate a DC file for each page in a book.
 6. Creates a MODS file from the collection_templates XML file and the YAML file inside of the content model folder.
 7. The main script to execute.
-
+8. Config file defauls
+9. Copy config.cfg.defaults to config.cfg
 
 ```
   -- Expected Folder Structure
@@ -62,6 +65,7 @@ The script is intended to be run as part of a cron job but can be done manually.
 3. This folder's naming convention is the PID of the parent, note the colon is replaced with 2 underscores.
         └── islandora__bookCollection
                        ^^^^^^^^^^^^^^ Name of the parent (PID)
+            ^^^^^^^^^ Repository (typically part of the URL Example:.../islandora:bookCollection/...)
 4. This folder's naming convention (book) is the string that represents a content model (cModel) of the content being ingested.
         Options are: basic (basic image; jpg, png, gif, bmp), large_image (tif, jp2), book (book: tif, jp2)
             └── book
@@ -83,18 +87,19 @@ The script is intended to be run as part of a cron job but can be done manually.
 15. The folder where a collection folder is moved to when everything ingests as expected.
 
 ```
+
 ## How to use this
-First will need to install "https://github.com/SFULibrary/islandora_datastream_crud" into drupal.
-1) vagrant ssh
-2) cd /var/www/drupal/sites/all/modules
-3) git clone https://github.com/SFULibrary/islandora_datastream_crud
-4) drush en -y islandora_datastream_crud
-5) cd /vagrant
-5a) edit run.sh in test mode (OPTIONAL). Change TEST_RUN to TRUE `TEST_RUN=true`. This will run everything accept the ingest and won't move the files for 2_ready_for_processing.
-6) ./run.sh 1 2 3
-      1. should be the path to drupal: /var/www/drupal
-      2. should be the parent path to automated_ingesting: ~/path/to/parent
-      3. URL of the main collection (OPTIONAL: defaults to localhost:8000/islandora/object)
+```shell
+$ vagrant ssh
+$ cd /vagrant
+$ git clone https://github.com/utkdigitalinitiatives/Automated-Ingest-for-Continuing-Publications
+$ cd Automated-Ingest-for-Continuing-Publications
+$ cp config.cfg.defaults config.cfg
+# edit values in config.cfg to your needs. The defaults will work with islandora_vagrant
+
+$ ./run.sh
+```
+
 
 ## Using YAML
 In the folder "collection_templates is half of a MODS in YAML form"

@@ -1,0 +1,6 @@
+TEST_RUN=false
+username=1
+DRUPAL_HOME_DIR="/var/www/drupal"
+WORKING_HOME_DIR="/vagrant"
+BASE_URL="https://localhost:8000/islandora/object"
+BASE_URI=localhost

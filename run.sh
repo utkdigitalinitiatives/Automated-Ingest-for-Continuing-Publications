@@ -1,9 +1,29 @@
 #!/bin/bash
-TEST_RUN=false
 
 # W3 times out during validation
 seconds_to_slowdown_validation=.5
 seconds_for_a_pause_validation=1
+
+config_read_file() {
+    (grep -E "^${2}=" -m 1 "${1}" 2>/dev/null || echo "VAR=__UNDEFINED__") | head -n 1 | cut -d '=' -f 2-;
+}
+
+config_get() {
+    val="$(config_read_file config.cfg "${1}")";
+    if [ "${val}" = "__UNDEFINED__" ]; then
+        val="$(config_read_file config.cfg.defaults "${1}")";
+    fi
+    printf -- "%s" "${val}";
+}
+
+TEST_RUN=$(config_get TEST_RUN)
+USERNAME=$(config_get username)
+BASE_URL=$(config_get BASE_URL)
+DRUPAL_HOME_DIR=$(config_get DRUPAL_HOME_DIR)
+WORKING_HOME_DIR=$(config_get WORKING_HOME_DIR)
+BASE_URL="${BASE_URL%/}"
+DRUPAL_HOME_DIR="${DRUPAL_HOME_DIR%/}"
+WORKING_HOME_DIR="${WORKING_HOME_DIR%/}"
 
 if [[ $(uname) == "Linux" ]]; then
   forced=''
@@ -11,30 +31,28 @@ else
   forced='--force '
 fi
 
-if [[ -z $1 || -z $2 ]]; then
-    echo -e "\n\n\t For production use:"
-    echo -e "\t\t ./run.sh /drupal/directory /path/to/folder http://URL_to_main_islandora_collection\n"
-    echo -e "\n\t For use in vagrant:"
-    echo -e "\t\t ./run.sh /var/www/drupal /vagrant http://localhost:8000/islandora/object \n"
-    exit
-fi
-
-if [[ -z $3 ]]; then
-  BASE_URL="http://localhost:8000/islandora/object"
+if [[ $USERNAME -eq 1 ]]; then
+  DRUPAL_USER='-u 1'
 else
-  BASE_URL="${3%/}"
+  DRUPAL_USER="--user=$USERNAME"
 fi
 
-clear
-DRUPAL_HOME_DIR="${1%/}"
-WORKING_HOME_DIR="${2%/}"
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
+DRUSH_VER=$($DRUSH --version | cut -d':' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//' | sed 's/\..*$//')
+
+if [[ $DRUSH_VER -gt 6 ]]; then
+  DRUSH_VERSION_TARGET="scan_target"
+else
+  DRUSH_VERSION_TARGET="target"
+fi
+
 three_errors="${WORKING_HOME_DIR}/automated_ingesting/3_errors"
 two_ready_for_processing="${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing"
 four_completed="${WORKING_HOME_DIR}/automated_ingesting/4_completed"
+clear
 
 INGESTION_STARTED=0
 WORKING_TMP=0
@@ -151,7 +169,7 @@ find . -type f -name '*.DS_Store' -ls -delete
 find . -type f -name 'Thumbs.db' -ls -delete
 
 # Rename tiff to tif
-find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
+find . -name "*.tiff" -exec bash -c 'mv "$DRUPAL_HOME_DIR" "${1%.tiff}".tif' - '{}' \;
 # END of correct common mistakes.
 
 # code snippet from
@@ -181,6 +199,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
     fi
 
     if [[ -d $FOLDER/book ]]; then
+      # Reset files.
+      find $FOLDER/book -type f -name 'DC.xml' -ls -delete
+      find $FOLDER/book -type f -name 'MODS.xml' -ls -delete
 
       # Correct if filename for MODS/PDF is lowercase or the extension is uppercase.
       rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.*
@@ -218,7 +239,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       done # End of SUBFOLDER loop
 
       # Create MODS and validate.
-      cd ${WORKING_HOME_DIR}
+      cd $WORKING_HOME_DIR
       for YML_FILE in $FOLDER/*/*.yml; do
         if [[ $(/bin/bash ${CURRENT_DIR}/check_yaml.sh $YML_FILE) == "fail" ]];  then
           echo -e >&2 "\n\n\n\tYAML file didn't pass checks. Empty value detected.\n\n\n" >> "${three_errors}/$(basename ${FOLDER}).txt"
@@ -378,9 +399,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 fi
 
                 INGESTION_STARTED="${collection}"
-                cd $1
+
                 # Book queuing for ingestion.
-                $($DRUSH -v --root=$1 -u 1 --uri=$HOST islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --target=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
 
                 # removes blank lines
                 sed -i '/^$/d' /tmp/automated_ingestion.log
@@ -388,15 +409,15 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 sid_value=$(cat /tmp/automated_ingestion.log | head -1 | tail -1)
 
                 # Ingesting book
-                $($DRUSH -v -u 1 --root=$1 --uri=$HOST islandora_batch_ingest >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
-                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$1 sql-query --db-prefix "${QU1}" | grep "[:]")
+                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "${QU1}" | grep "[:]")
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
                 for i in "${BATCH_PIDS[@]}"
                 do
-                  PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${3}/${i}/datastream/OBJ/view")
+                  PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
                   [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
                 done
                 unset target
@@ -404,7 +425,6 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 let WORKING_TMP=0
                 WORKING_TMP_DIR=""
                 let INGESTION_STARTED=0
-                cd -
               done
 
               # Known False alarms
@@ -465,12 +485,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # Basic image ingest content
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
-              cd $1
+              cd $DRUPAL_HOME_DIR
               echo "" > /tmp/automated_ingestion.log
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
               # Basic Image queuing for ingestion.
-              $($DRUSH -v --root=$1 -u 1 --uri=$HOST islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --target=$basic_img_target && $DRUSH -v -u 1 --root=$1 --uri=$HOST islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$basic_img_target && $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
@@ -525,9 +545,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             if [[ ! $TEST_RUN == true ]]; then
               echo "" > /tmp/automated_ingestion.log
               INGESTION_STARTED="${collection}"
-              cd $1
+              cd $DRUPAL_HOME_DIR
               # Large Image queuing for ingestion.
-              $($DRUSH -v --root=$1 -u 1 --uri=$HOST  islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --target=$large_image_target && $DRUSH -v -u 1 --root=$1 --uri=$HOST islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$large_image_target && $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')

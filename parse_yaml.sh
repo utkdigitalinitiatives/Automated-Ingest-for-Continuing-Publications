@@ -18,4 +18,4 @@ function parse_yaml {
    }'
 }
 
-[ -f "${1}.yml" ] && parse_yaml $1
+[ -f "${1}.yml" ] && parse_yaml "${1}"

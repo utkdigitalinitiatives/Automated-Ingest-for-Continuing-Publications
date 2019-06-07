@@ -2,15 +2,22 @@
 
 # $1 is the folder ie. ../islandora__bookCollection/book/issue1/
 # $2 is the parent collection folder ie. islandora__bookCollection
-cd ${3}
+
+[ -f /tmp/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "/tmp/oai_dc.xsd"
+[ -f /tmp/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "/tmp/mods-3-5.xsd"
+[ -f /tmp/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "/tmp/simpledc20021212.xsd"
 
 # Remove previous file
 [[ -f /tmp/MODS.xml ]] && rm -f /tmp/MODS.xml
 [[ -f /tmp/$(basename ${1%.*})_MODS.xml ]] && rm -f /tmp/$(basename ${1%.*})_MODS.xml
 [[ -f "${1%.*}/MODS.xml" ]] && rm -f "${1%.*}/MODS.xml"
+
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+cd $CURRENT_DIR
+
 # Pulls the yaml values for the book issue in as variables.
-[ -f "${1}.yml" ] && yaml_values_for_book=$(/bin/bash ${CURRENT_DIR}/parse_yaml.sh "${1}.yml")
+[ -f "${1}.yml" ] && yaml_values_for_book=$(/bin/bash parse_yaml.sh "$1.yml")
 eval $yaml_values_for_book
 
 # Pulls the default collection yaml values for the book issue in as variables.
