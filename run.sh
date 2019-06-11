@@ -19,9 +19,11 @@ config_get() {
 TEST_RUN=$(config_get TEST_RUN)
 USERNAME=$(config_get username)
 BASE_URL=$(config_get BASE_URL)
+BASE_URI=$(config_get BASE_URI)
 DRUPAL_HOME_DIR=$(config_get DRUPAL_HOME_DIR)
 WORKING_HOME_DIR=$(config_get WORKING_HOME_DIR)
 BASE_URL="${BASE_URL%/}"
+BASE_URI="${BASE_URI%/}"
 DRUPAL_HOME_DIR="${DRUPAL_HOME_DIR%/}"
 WORKING_HOME_DIR="${WORKING_HOME_DIR%/}"
 
@@ -264,7 +266,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         fi
         unset count_obj_in_folder
 
-        /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${CURRENT_DIR}/${FOLDER}" "${WORKING_HOME_DIR}"
+        /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${FOLDER}" "${WORKING_HOME_DIR}"
         let COUNTER=COUNTER+1
         echo "Counter = $COUNTER"
         sleep $seconds_to_slowdown_validation
