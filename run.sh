@@ -490,7 +490,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
               # Basic Image queuing for ingestion.
-              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$basic_img_target && $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
+               $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$basic_img_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
@@ -545,9 +545,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             if [[ ! $TEST_RUN == true ]]; then
               echo "" > /tmp/automated_ingestion.log
               INGESTION_STARTED="${collection}"
-              cd $DRUPAL_HOME_DIR
+
               # Large Image queuing for ingestion.
-              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$large_image_target && $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$large_image_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
 
               msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
               msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
@@ -562,13 +562,14 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 echo -e "Basic Image objects ingested\n\n"
               fi
               let INGESTION_STARTED=0
-              cd -
             fi
           fi
         fi
 
       else
         MESSAGES += "PID unknown for $collection"
+        echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> /tmp/automated_ingestion.log
+        echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> ${three_errors}/$(basename ${collection}).txt
         let FAILURES=FAILURES+1
       fi
 
