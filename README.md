@@ -220,6 +220,7 @@ collection_templates
        └── seventh_edition.yml
    ````
    - Rename `automated_ingest_test/` to `test__elephant`.
+   - Replace `seventh_edition.yml` with the `test__elephant.yml` but rename it back to match the folder (seventh_edition.yml).
    - The book subfolder (`seventh_edition/`) & yaml filename (`seventh_edition.yml`) naming is mostly ignored, they just needs to match eachother.
    - copy `test__elephant` into `/vagrant/automated_ingesting/2_ready_for_processing`
 4. `git clone https://github.com/utkdigitalinitiatives/Automated-Ingest-for-Continuing-Publications`
