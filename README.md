@@ -174,6 +174,57 @@ Large Image
                       └── 001003.xml     └── Matching jp2 & MODS names
 ```
 
+## How to test a new collection template
+This example will assume you're using [islandora_vagrant](https://github.com/Islandora-Labs/islandora_vagrant) and you've cloned this into vagrant's /vagrant directory. 
+```shell
+collection_templates
+├── islandora__bookCollection.xml
+│   ▲▲▲▲▲▲▲▲▲ 
+│   Namespace 
+│   
+└── islandora__bookCollection.yml
+               ▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+               Collection
+# Together they make the collection PID (excluding the ":")
+```
+1. Create a new pair of template files and put them in the collection_templates folder.
+    > test__elephant.xml
+    > test__elephant.yml
+2. Create a new collection
+   - Add an object to this Collection
+   - Collection PID
+     > test:elephant
+   - Collection Title
+     > This is a test Collection
+   - Ingest
+   - Manage
+   - Collection
+   - Manage collection policy
+   - Check __Islandora Internet Archive Book Content Model (islandora:bookCModel)__
+   - Change all __NAMESPACE__ fields to _test_
+   - Click Update
+3. Place book (folder) into a folder called automated_ingesting as described above.
+   __OPTIONAL__ : this will create a test book for you.
+   - You can download the a test book from https://github.com/DonRichards/Islandora-Book-Batch-Example
+   - Run the `build_extended_test_images.sh` to generate a a test folder automated_ingest_test 
+   ```shell
+   automated_ingest_test
+    └── book
+       ├── seventh_edition
+       │   ├── 1
+       │   │   └── OBJ.tiff
+       │   ├── 2
+       │   │   └── OBJ.tif
+       │   └── 3
+       │       └── OBJ.tif
+       └── seventh_edition.yml
+   ````
+   - Rename `automated_ingest_test/` to `test__elephant`.
+   - The book subfolder (`seventh_edition/`) & yaml filename (`seventh_edition.yml`) naming is mostly ignored, they just needs to match eachother.
+   - copy `test__elephant` into `/vagrant/automated_ingesting/2_ready_for_processing`
+4. `git clone https://github.com/utkdigitalinitiatives/Automated-Ingest-for-Continuing-Publications`
+5. `cd Automated-Ingest-for-Continuing-Publications`
+6. Run script (`./run.sh`)
 
 ## To dos
 * Check the integrity of the image file prior to ingest.
