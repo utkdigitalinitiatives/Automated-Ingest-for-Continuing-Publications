@@ -245,12 +245,22 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
       # Create MODS and validate.
       cd $WORKING_HOME_DIR
+
       for YML_FILE in $FOLDER/*/*.yml; do
-        if [[ $(/bin/bash ${CURRENT_DIR}/check_yaml.sh $YML_FILE) == "fail" ]];  then
-          echo -e >&2 "\n\n\n\tYAML file didn't pass checks. Empty value detected.\n\n\n" >> "${three_errors}/$(basename ${FOLDER}).txt"
+        # Need to combine some of this.
+        [ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).xml ] || echo -e "Missing collection_template XML file." >> ${three_errors}/$(basename ${FOLDER}).txt
+        if [[ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).yml ]]; then
+          if [[ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).xml ]]; then
+            if [[ $(/bin/bash ${CURRENT_DIR}/check_yaml.sh $YML_FILE) == "fail" ]];  then
+              echo -e >&2 "\n\n\n\tYAML file didn't pass checks. Empty value detected.\n\n\n" >> "${three_errors}/$(basename ${FOLDER}).txt"
+            fi
+            /bin/bash ${CURRENT_DIR}/create_mods.sh "${WORKING_HOME_DIR}/${YML_FILE%.yml}" "${FOLDER}" "${WORKING_HOME_DIR}"
+          fi
+        else
+          echo -e "Missing collection_template YAML file." >> ${three_errors}/$(basename ${FOLDER}).txt
         fi
-        /bin/bash ${CURRENT_DIR}/create_mods.sh "${WORKING_HOME_DIR}/${YML_FILE%.yml}" "${FOLDER}" "${WORKING_HOME_DIR}"
       done
+
       # Create the DC files for each page directory.
       COUNTER=0
       for PAGE_FOLDER in $FOLDER/*/*/*/; do
@@ -395,6 +405,14 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 let WORKING_TMP=1
                 WORKING_TMP_DIR="/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
 
+                # Create initial hashes
+                images=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2")
+                for file in $images
+                do
+                    hash_check="$(sha256sum $file)"
+                    echo "${hash_check%%[[:space:]]*}" >> /tmp/hashes.txt
+                done
+
                 rsync -avz "${WORKING_HOME_DIR}/${D}" "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
                 if [ "$?" -eq "0" ]; then
                   echo "Done"
@@ -418,18 +436,43 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
-                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "${QU1}" | grep "[:]")
+                QU2="SELECT COUNT(*) FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
+                [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "$QU1" | grep "[:]")
+                [[ $sid_value ]] && COUNT_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --extra=--skip-column-names --db-prefix "$QU2")
+
+                image_count=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2" | wc -l)
+                if [[ $image_count -eq $COUNT_PIDS ]]; then
+                  echo "PID count matches image count"
+                else
+                  echo -e "There are ${#images} images in $D and $COUNT_PIDS batch processed PIDS for pages." >> ${three_errors}/$(basename ${collection}).txt
+                fi
+                unset images
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
                 for i in "${BATCH_PIDS[@]}"
                 do
                   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
                   [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
+                  # Hash each PID's object to check if it was found.
+                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/view" --output /tmp/test{i}.tif)
+
+                    declare file="/tmp/hashes.txt"
+                    declare regex="$(sha256sum /tmp/test{i}.tif)"
+                    declare regex_m="${regex%%[[:space:]]*}"
+                    echo -e "List of Hashes: \n$(cat $file)\n\n"
+                    if grep -Fxq $regex_m $file
+                        then
+                            echo -e "Hash matches original\n\t${regex_m}\n\n"
+                        else
+                            echo -e "Page hash has no match\n\t${BASE_URL}/${i}" >> ${three_errors}/$(basename ${collection}).txt
+                    fi
+                    rm -f /tmp/test{i}.tif
                 done
                 unset target
                 rm -rf "/tmp/$(basename $FOLDER)_$(basename $D)"
                 let WORKING_TMP=0
                 WORKING_TMP_DIR=""
                 let INGESTION_STARTED=0
+                rm -f /tmp/hashes.txt
               done
 
               # Known False alarms
@@ -577,6 +620,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> ${three_errors}/$(basename ${collection}).txt
         let FAILURES=FAILURES+1
       fi
+
+      if [[ -f ${three_errors}/$(basename ${collection}).txt ]]; then
+        error_stats=$(stat --printf="%s" ${three_errors}/$(basename ${collection}).txt)
+        [ "${error_stats:-0}" -eq 0 ] || let FAILURES=FAILURES+1
+      fi
+      unset error_stats
 
       # Actions for when a Failure is detected
       # --------------------------------------------------------------------------
