@@ -1,4 +1,4 @@
 volume: "XX" # Replace XX with the volume number
-issue: "X" # Replace X with the number or issue number
+number: "X" # Replace X with the number or issue number
 date_Issued: "Month YYYY" # Replace with the month fully written out and the four-digit year, e.g. November 2019
 date_Issued_edtf: "YYYY-MM" # Replace letters with a four-digit year and a two-digit month, e.g. 2019-04
