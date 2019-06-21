@@ -71,6 +71,8 @@ function cleanup_files {
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
   rm -rf /tmp/*_MODS.xml
   rm -rf /tmp/*_DC.xml
+  rm -f /tmp/hashes.txt
+  rm -f /tmp/test*.tif
 }
 
 trap cleanup_files EXIT
@@ -168,6 +170,7 @@ fi
 
 # Cleanup incase of an OSX or Windows mounts create hidden files.
 find . -type f -name '*.DS_Store' -ls -delete
+find . -type f -name '*._*' -ls -delete
 find . -type f -name 'Thumbs.db' -ls -delete
 
 # Rename tiff to tif
