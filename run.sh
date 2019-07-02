@@ -4,12 +4,14 @@
 seconds_to_slowdown_validation=.5
 seconds_for_a_pause_validation=1
 
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 config_read_file() {
     (grep -E "^${2}=" -m 1 "${1}" 2>/dev/null || echo "VAR=__UNDEFINED__") | head -n 1 | cut -d '=' -f 2-;
 }
 
 config_get() {
-    val="$(config_read_file config.cfg "${1}")";
+    val="$(config_read_file ${CURRENT_DIR}/config.cfg "${1}")";
     if [ "${val}" = "__UNDEFINED__" ]; then
         val="$(config_read_file config.cfg.defaults "${1}")";
     fi
@@ -39,7 +41,6 @@ else
   DRUPAL_USER="--user=$USERNAME"
 fi
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TODAY=$(date)
 HOST=$(hostname)
 DRUSH=$(which drush)
