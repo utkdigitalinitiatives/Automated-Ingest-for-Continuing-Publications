@@ -63,17 +63,17 @@ WORKING_TMP_DIR=""
 
 # In case process is terminated.
 function cleanup_files {
-  [ -f '/tmp/oai_dc.xsd' ] && rm -f /tmp/oai_dc.xsd
-  [ -f '/tmp/mods-3-5.xsd' ] && rm -f /tmp/mods-3-5.xsd
-  [ -f '/tmp/simpledc20021212.xsd' ] && rm -f /tmp/simpledc20021212.xsd
-  [ -f '/tmp/*_MODS.xml' ] && rm -rf /tmp/*_MODS.xml
+  [ -f '${WORKING_HOME_DIR}/tmp/oai_dc.xsd' ] && rm -f ${WORKING_HOME_DIR}/tmp/oai_dc.xsd
+  [ -f '${WORKING_HOME_DIR}/tmp/mods-3-5.xsd' ] && rm -f ${WORKING_HOME_DIR}/tmp/mods-3-5.xsd
+  [ -f '${WORKING_HOME_DIR}/tmp/simpledc20021212.xsd' ] && rm -f ${WORKING_HOME_DIR}/tmp/simpledc20021212.xsd
+  [ -f '${WORKING_HOME_DIR}/tmp/*_MODS.xml' ] && rm -rf ${WORKING_HOME_DIR}/tmp/*_MODS.xml
   echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
   [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
-  rm -rf /tmp/*_MODS.xml
-  rm -rf /tmp/*_DC.xml
-  rm -f /tmp/hashes.txt
-  rm -f /tmp/test*.tif
+  rm -rf ${WORKING_HOME_DIR}/tmp/*_MODS.xml
+  rm -rf ${WORKING_HOME_DIR}/tmp/*_DC.xml
+  rm -f ${WORKING_HOME_DIR}/tmp/hashes.txt
+  rm -f ${WORKING_HOME_DIR}/tmp/test*.tif
 }
 
 trap cleanup_files EXIT
@@ -91,12 +91,12 @@ fi
 
 
 # Download xsd schema
-[ -f /tmp/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "/tmp/oai_dc.xsd"
-[ -f /tmp/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "/tmp/mods-3-5.xsd"
-[ -f /tmp/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "/tmp/simpledc20021212.xsd"
+[ -f ${WORKING_HOME_DIR}/tmp/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${WORKING_HOME_DIR}/tmp/oai_dc.xsd"
+[ -f ${WORKING_HOME_DIR}/tmp/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${WORKING_HOME_DIR}/tmp/mods-3-5.xsd"
+[ -f ${WORKING_HOME_DIR}/tmp/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${WORKING_HOME_DIR}/tmp/simpledc20021212.xsd"
 
 # Replace url with string to downloaded version.
-sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#/tmp/simpledc20021212.xsd#g' /tmp/oai_dc.xsd
+sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${WORKING_HOME_DIR}/tmp/simpledc20021212.xsd#g' ${WORKING_HOME_DIR}/tmp/oai_dc.xsd
 
 cd $WORKING_HOME_DIR
 
@@ -336,7 +336,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
     unset msg
     basename_of_collection=$(basename ${collection})
     # clean out old files
-    echo "" > /tmp/automated_ingestion.log
+    echo "" > ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
 
     ADMIN_FAILURES=0
     FAILURES=0
@@ -397,43 +397,43 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
 
-              echo "" >> /tmp/automated_ingestion.log
+              echo "" >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
               book_parent="${basename_of_collection//__/:}"
 
               for D in ${collection}book/*/; do
-                target="/tmp/$(basename $FOLDER)_$(basename $D)"
-                mkdir -p "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+                target="${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)"
+                mkdir -p "${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
                 let WORKING_TMP=1
-                WORKING_TMP_DIR="/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+                WORKING_TMP_DIR="${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
 
                 # Create initial hashes
                 images=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2")
                 for file in $images
                 do
                     hash_check="$(sha256sum $file)"
-                    echo "${hash_check%%[[:space:]]*}" >> /tmp/hashes.txt
+                    echo "${hash_check%%[[:space:]]*}" >> ${WORKING_HOME_DIR}/tmp/hashes.txt
                 done
 
-                rsync -avz "${WORKING_HOME_DIR}/${D}" "/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
+                rsync -avz "${WORKING_HOME_DIR}/${D}" "${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)/issue1/"
                 if [ "$?" -eq "0" ]; then
                   echo "Done"
                 else
-                  echo "Error while running copying files from ${WORKING_HOME_DIR}/${D} to /tmp/$(basename $FOLDER)_$(basename $D)/issue1/" >> ${three_errors}/$(basename ${collection}).txt
+                  echo "Error while running copying files from ${WORKING_HOME_DIR}/${D} to ${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)/issue1/" >> ${three_errors}/$(basename ${collection}).txt
                   exit
                 fi
 
                 INGESTION_STARTED="${collection}"
 
                 # Book queuing for ingestion.
-                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$target --output_set_id=TRUE >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$target --output_set_id=TRUE >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log)
 
                 # removes blank lines
-                sed -i '/^$/d' /tmp/automated_ingestion.log
+                sed -i '/^$/d' ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
 
-                sid_value=$(cat /tmp/automated_ingestion.log | head -1 | tail -1)
+                sid_value=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | head -1 | tail -1)
 
                 # Ingesting book
-                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
+                $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log)
 
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
@@ -454,10 +454,10 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
                   [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
                   # Hash each PID's object to check if it was found.
-                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/view" --output /tmp/test{i}.tif)
+                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/view" --output ${WORKING_HOME_DIR}/tmp/test{i}.tif)
 
-                    declare file="/tmp/hashes.txt"
-                    declare regex="$(sha256sum /tmp/test{i}.tif)"
+                    declare file="${WORKING_HOME_DIR}/tmp/hashes.txt"
+                    declare regex="$(sha256sum ${WORKING_HOME_DIR}/tmp/test{i}.tif)"
                     declare regex_m="${regex%%[[:space:]]*}"
                     echo -e "List of Hashes: \n$(cat $file)\n\n"
                     if grep -Fxq $regex_m $file
@@ -466,23 +466,23 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                         else
                             echo -e "Page hash has no match\n\t${BASE_URL}/${i}" >> ${three_errors}/$(basename ${collection}).txt
                     fi
-                    rm -f /tmp/test{i}.tif
+                    rm -f ${WORKING_HOME_DIR}/tmp/test{i}.tif
                 done
                 unset target
-                rm -rf "/tmp/$(basename $FOLDER)_$(basename $D)"
+                rm -rf "${WORKING_HOME_DIR}/tmp/$(basename $FOLDER)_$(basename $D)"
                 let WORKING_TMP=0
                 WORKING_TMP_DIR=""
                 let INGESTION_STARTED=0
-                rm -f /tmp/hashes.txt
+                rm -f ${WORKING_HOME_DIR}/tmp/hashes.txt
               done
 
               # Known False alarms
-              sed '/java.io.FileNotFoundException:/d' /tmp/automated_ingestion.log > /tmp/automated_ingestion.log
+              sed '/java.io.FileNotFoundException:/d' ${WORKING_HOME_DIR}/tmp/automated_ingestion.log > ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
 
-              msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+              msg=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep '\[error\]')
 
               if [[ $msg ]]; then
                 echo -e "We have an error with the ingestion process\n\n$msg" >> ${three_errors}/$(basename ${collection}).txt
@@ -492,7 +492,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 echo "PID: ${sid_value}"
               fi
               unset msg
-              rm -f /tmp/automated_ingestion.log
+              rm -f ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
             fi
           fi
         fi
@@ -535,16 +535,16 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
               cd $DRUPAL_HOME_DIR
-              echo "" > /tmp/automated_ingestion.log
+              echo "" > ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
               # Basic Image queuing for ingestion.
-               $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$basic_img_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
+               $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_basic_image --parent=$basic_img_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$basic_img_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log)
 
-              msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+              msg=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep '\[error\]')
 
               if [[ $msg ]]; then
                 echo -e "We have an error with the ingestion process" >> ${three_errors}/$(basename ${collection}).txt
@@ -592,16 +592,16 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # Large image ingest content.
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
-              echo "" > /tmp/automated_ingestion.log
+              echo "" > ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
               INGESTION_STARTED="${collection}"
 
               # Large Image queuing for ingestion.
-              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$large_image_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> /tmp/automated_ingestion.log)
+              $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_scan_preprocess --content_models=islandora:sp_large_image_cmodel --parent=$large_image_parent --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$large_image_target && $DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log)
 
-              msg=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
-              msg+=$(cat /tmp/automated_ingestion.log | grep '\[error\]')
+              msg=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Failed to ingest object.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Exception:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep -Pzo '^.*?Unknown options:.*?(\n(?=\s).*?)*$')
+              msg+=$(cat ${WORKING_HOME_DIR}/tmp/automated_ingestion.log | grep '\[error\]')
 
               if [[ $msg ]]; then
                 echo -e "We have an error with the ingestion process" >> ${three_errors}/$(basename ${collection}).txt
@@ -617,7 +617,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
       else
         MESSAGES += "PID unknown for $collection"
-        echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> /tmp/automated_ingestion.log
+        echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> ${WORKING_HOME_DIR}/tmp/automated_ingestion.log
         echo -e "Can't check parent $collection URL\n\t Unreachable: ${BASE_URL}/${basename_of_collection/__/%3A}" >> ${three_errors}/$(basename ${collection}).txt
         let FAILURES=FAILURES+1
       fi
