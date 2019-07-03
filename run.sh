@@ -70,7 +70,7 @@ function cleanup_files {
   echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
   [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
-  # rm -rf ${WORKING_HOME_DIR}/automated_ingesting/tmp
+  rm -rf ${WORKING_HOME_DIR}/automated_ingesting/tmp
 }
 
 trap cleanup_files EXIT
