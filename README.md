@@ -253,9 +253,9 @@ After ingesting a collection, check if everything went in and wasn't corrupted d
 3. Verifies the collection is reachable.
 4. Call Solr for a __count__ of all the PIDS for the specified name space with the specified content model.
 5. Call Solr for a __list__ of all the PIDS for the specified name space with the specified content model.
-6. Check the checksum type from the web hosted object is SHA-256, if it isn't it will manually download the file and hash the downloaded file. If the type was SHA-256 it will use the hash value in fedora.
+6. Identify the checksum type for the 1st object online and uses that checksum type for local file system checking and verifies each object uses the same checksum type, if it differs the script will download the object's OBJ file and hash it. But if the type matches it will use the hash value from fedora instead of recreating the value.
 7. Checks the the web hosted object's hash is in the list of local file system hashes.
-8. Checks the the web hosted object's hash is in the list of web hosted object hashes (for duplicates).
+8. Checks the the web hosted object's hash is already in the list of web hosted object hashes (for duplicates).
 9. Outputs a report
 
 __Example of the output__
