@@ -175,12 +175,12 @@ Large Image
 ```
 
 ## How to test a new collection template
-This example will assume you're using [islandora_vagrant](https://github.com/Islandora-Labs/islandora_vagrant) and you've cloned this into vagrant's /vagrant directory. 
+This example will assume you're using [islandora_vagrant](https://github.com/Islandora-Labs/islandora_vagrant) and you've cloned this into vagrant's /vagrant directory.
 ```shell
 collection_templates
 ├── islandora__bookCollection.xml
-│   ▲▲▲▲▲▲▲▲▲ 
-│   Namespace 
+│   ▲▲▲▲▲▲▲▲▲
+│   Namespace
 │   
 └── islandora__bookCollection.yml
                ▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -206,7 +206,7 @@ collection_templates
 3. Place book (folder) into a folder called automated_ingesting as described above.
    __OPTIONAL__ : this will create a test book for you.
    - You can download the a test book from https://github.com/DonRichards/Islandora-Book-Batch-Example
-   - Run the `build_extended_test_images.sh` to generate a a test folder automated_ingest_test 
+   - Run the `build_extended_test_images.sh` to generate a a test folder automated_ingest_test
    ```shell
    automated_ingest_test
     └── book
@@ -232,11 +232,13 @@ After ingesting a collection, check if everything went in and wasn't corrupted d
 * hashes all of the content  
 
 ```shell
-./check_collection.sh ParentNameSpace /path/to/original/files/ contentType
+./check_collection.sh Parent:PID /path/to/original/files/ contentType
 
 # Example
-./check_collection.sh einstein_oro /vagrant/einstein audio
+./check_collection.sh islandora:einstein_oro /vagrant/einstein audio
 ```
+You will have an issue if the parent and pid are the same.
+
 * Parent Name Space is the name space of the parent the objects were ingested into.
 * Path needs to be an absolute path.
 * Content types can be audio, video, book, pdf, lg OR basic.
@@ -245,7 +247,7 @@ After ingesting a collection, check if everything went in and wasn't corrupted d
     * book = Book content model (tif, jp2)
     * pdf = PDF content model (pdf)
     * lg = Large Image content model (tif, jp2)
-    * basic = Basic Image content model (gif, jpg, bmp) 
+    * basic = Basic Image content model (gif, jpg, bmp)
 
 ### What this script does
 1. Creates a file that contains all of the SHA-256 hashes for all of the files associated with the specified content type. This is a asyncronous proces and can tax a system's performance and is limited to 8 files at a time.

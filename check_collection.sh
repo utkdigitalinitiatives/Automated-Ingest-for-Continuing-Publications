@@ -16,7 +16,7 @@ cat << "EOF"
       ```-----....._____```---...___(__\_\_|_/__)___...---'''_____.....-----'''
 
 EOF
-
+OOPS="\n\n\t./check_collection.sh \$1 \$2 \$3\n\t\t\t      \$1 collection PID\n\t\t\t         \$2 /path/to/original/files/\n\t\t\t            \$3 (audio, video, book, pdf, lg OR basic)\n\n\t./check_collection.sh islandora:einstein_oro /path/to/original/files/ audio\n\n\n"
 if [[ ! -f config.cfg ]]; then
   cp config.cfg.defaults config.cfg
 fi
@@ -26,6 +26,10 @@ fi
 # Set Variables of where to look
 COLLECTION_NAMESPACE="${1#*:}"
 COLLECTION_PARENT_NAME="${1//:*/}"
+if [[ $COLLECTION_PARENT_NAME == $COLLECTION_NAMESPACE ]]; then
+  echo -e "$OOPS"
+  exit
+fi
 
 FIND_PATTERN="$2"
 PATH_NAME=$(echo ${2:1} | sed -e 's/\//_/g')
@@ -138,7 +142,7 @@ case "$3" in
     echo -e "\t\tcomplete\n"
     ;;
   *)
-    echo -e "\n\n\t./check_collection.sh \$1 \$2 \$3\n\t\t\t      \$1 collection PID\n\t\t\t         \$2 /path/to/original/files/\n\t\t\t            \$3 (audio, video, book, pdf, lg OR basic)\n\n\t./check_collection.sh einstein_oro /path/to/original/files/ audio\n\n\n"
+    echo -e "$OOPS"
     exit 1
 esac
 
