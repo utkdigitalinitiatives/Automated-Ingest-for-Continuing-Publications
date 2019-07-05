@@ -227,6 +227,40 @@ collection_templates
 5. `cd Automated-Ingest-for-Continuing-Publications`
 6. Run script (`./run.sh`)
 
+## How to use check_collection.sh
+After ingesting a collection, check if everything went in and wasn't corrupted during the process. Most general setting are retrieved from the config.cfg file, it needs to be filled out completely.
+* hashes all of the content  
+
+```shell
+./check_collection.sh ParentNameSpace /path/to/original/files/ contentType
+
+# Example
+./check_collection.sh einstein_oro /vagrant/einstein audio
+```
+* Parent Name Space is the name space of the parent the objects were ingested into.
+* Path needs to be an absolute path.
+* Content types can be audio, video, book, pdf, lg OR basic.
+    * audio = Audio content model (mp3, wav)
+    * video = Video content model (ogg, mp4, mov, qt, m4v, avi, mkv)
+    * book = Book content model (tif, jp2)
+    * pdf = PDF content model (pdf)
+    * lg = Large Image content model (tif, jp2)
+    * basic = Basic Image content model (gif, jpg, bmp) 
+
+### What this script does
+1. Creates a file that contains all of the SHA-256 hashes for all of the files associated with the specified content type. This is a asyncronous proces and can tax a system's performance and is limited to 8 files at a time.
+2. If you've ran the already, an existing hash file will exist and this will promp to ask if you'd like to regenerate the hash log for this directory.
+3. Verifies the collection is reachable.
+4. Call Solr for a __count__ of all the PIDS for the specified name space with the specified content model.
+5. Call Solr for a __list__ of all the PIDS for the specified name space with the specified content model.
+6. Check the checksum type from the web hosted object is SHA-256, if it isn't it will manually download the file and hash the downloaded file. If the type was SHA-256 it will use the hash value in fedora.
+7. Checks the the web hosted object's hash is in the list of local file system hashes.
+8. Checks the the web hosted object's hash is in the list of web hosted object hashes (for duplicates).
+9. Outputs a report
+
+__Example of the output__
+![ScreenShot of check_collection.sh](https://user-images.githubusercontent.com/2738244/60742865-fd6acd80-9f3c-11e9-9f32-e78d821059df.gif)
+
 ## To dos
 * Check the integrity of the image file prior to ingest.
 * Check that each page's URL renders/returns a valid image.
