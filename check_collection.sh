@@ -16,17 +16,22 @@ cat << "EOF"
       ```-----....._____```---...___(__\_\_|_/__)___...---'''_____.....-----'''
 
 EOF
-echo -e "\n\n\t./check_collection.sh \$1 \$2 \$3\n\t\t\t      \$1 collection PID\n\t\t\t         \$2 /path/to/original/files/\n\t\t\t            \$3 (audio, video, book, pdf, lg OR basic)\n\n\t./check_collection.sh einstein_oro /path/to/original/files/ audio\n\n\n"
+
+if [[ ! -f config.cfg ]]; then
+  cp config.cfg.defaults config.cfg
+fi
 
 [ -d check_collection_logs ] || mkdir check_collection_logs
 
 # Set Variables of where to look
-COLLECTION_NAME=$1
+COLLECTION_NAMESPACE="${1#*:}"
+COLLECTION_PARENT_NAME="${1//:*/}"
+
 FIND_PATTERN="$2"
 PATH_NAME=$(echo ${2:1} | sed -e 's/\//_/g')
-
 LOG_PATH_LIST="check_collection_logs/${PATH_NAME}_${3}_list.txt"
 LOG_PATH_LOCAL_HASHES="check_collection_logs/${PATH_NAME}_${3}_local_hashes.txt"
+LOG_PATH_LOCAL_HASHES_DUPLICATES="check_collection_logs/${PATH_NAME}_${3}_local_hashes_duplicates.txt"
 LOG_PATH_LOCAL_HASH_LIST="check_collection_logs/${PATH_NAME}_${3}_local_hash_list.txt"
 LOG_PATH_ERRORS="check_collection_logs/${PATH_NAME}_${3}_errors.txt"
 LOG_PATH_DOWNLOADED_HASH_LIST="check_collection_logs/${PATH_NAME}_${3}_downloaded_hash_list.txt"
@@ -54,6 +59,13 @@ config_get() {
   printf -- "%s" "${val}";
 }
 
+has_duplicates()
+{
+  {
+    sort | uniq -d | grep . -qc
+  } < "$1"
+}
+
 DOMAIN=$(config_get CHECK_COLLECTION_DOMAIN)
 SOLR_DOMAIN_AND_PORT=$(config_get CHECK_COLLECTION_SOLR_DOMAIN_AND_PORT)
 COLLECTION_URL=$(config_get CHECK_COLLECTION_COLLECTION_URL)
@@ -63,7 +75,7 @@ FEDORAPASS=$(config_get CHECK_COLLECTION_FEDORAPASS)
 
 DOMAIN="${DOMAIN%/}"
 SOLR_DOMAIN_AND_PORT="${SOLR_DOMAIN_AND_PORT%/}"
-COLLECTION_URL="${COLLECTION_URL%/}"
+COLLECTION_URL="${COLLECTION_URL%/}/${COLLECTION_PARENT_NAME}%3A"
 OBJECT_URL="${OBJECT_URL%/}"
 
 [ -f $LOG_PATH_LIST ] && rm -f $LOG_PATH_LIST
@@ -131,18 +143,18 @@ case "$3" in
 esac
 
 # Making sure the collection is findable
-echo -e "\tChecking if ${COLLECTION_URL}${COLLECTION_NAME} is reachable"
+echo -e "\tChecking if ${COLLECTION_URL}${COLLECTION_NAMESPACE} is reachable"
 declare -i count=0
 connect_to_collection(){
   # try up to five times before timing out.
   if [ $count -gt 5 ]; then
-    echo -e "\t  Can not find \"\033[38;5;2m$COLLECTION_NAME\033[0m\"\n\tLook at the URL after \"collections%3A\" \n\t   ${COLLECTION_URL}\033[38;5;2mCOLLECTION-NAME\033[0m\ \n\n\n"
+    echo -e "\t  Can not find \"\033[38;5;2m${COLLECTION_URL}${COLLECTION_NAMESPACE}\033[0m\"\n\tLook at the URL after \"collections%3A\" \n\t   ${COLLECTION_URL}\033[38;5;2mCOLLECTION-NAME\033[0m\ \n\n\n"
     exit 0
   fi
-  status=$(curl -s --head "${COLLECTION_URL}${COLLECTION_NAME}" | head -n 1 | grep "HTTP/1.[01] [23]..")
+  status=$(curl -s --head "${COLLECTION_URL}${COLLECTION_NAMESPACE}" | head -n 1 | grep "HTTP/1.[01] [23]..")
   sleep 1
   if [[ -z $status ]]; then
-    echo -e "$COLLECTION_URL${COLLECTION_NAME} has timed out, trying again. Retry $count out of 5"
+    echo -e "${COLLECTION_URL}${COLLECTION_NAMESPACE} has timed out, trying again. Retry $count out of 5"
     ((count++))
     sleep 1
     connect_to_collection
@@ -153,14 +165,53 @@ connect_to_collection(){
 }
 (connect_to_collection)
 
-echo -e "\n\tGetting PIDs and count of all of the objects within $COLLECTION_NAME collection\n"
-SOLR_COUNT=$(curl -X GET --progress-bar "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAME}%5C%3A*${CONTENT_MODEL}&sort=PID+asc&rows=0&fl=PID&wt=xml&indent=true" | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | head -1 | sed -e 's/^0\+//')
-SOLR_PIDS=$(curl -X GET --progress-bar "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAME}%5C%3A*&sort=PID+asc${CONTENT_MODEL}&rows=100000&fl=PID&wt=csv&indent=true" | tail -n +2)
-echo -e "\t\t\e[32m Count: ${SOLR_COUNT} \033[0m\n"
+echo -e "\n\tGetting PIDs and count of all of the objects within $COLLECTION_PARENT_NAME collection\n"
+SOLR_COUNT=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true" | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d' )
+SOLR_PIDS=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*&sort=PID+asc${CONTENT_MODEL}&rows=100000&fl=PID&wt=csv&indent=true" | tail -n +2)
+echo -e "\t\t\e[32m Count: ${SOLR_COUNT}\033[0m\n"
+
+if [[ $SOLR_COUNT == '' ]]; then
+  echo "No PIDS found in Solr"
+echo "$SOLR_DOMAIN_AND_PORT/solr/#/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d'"
+  exit
+fi
+
+[ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] && rm -f $LOG_PATH_DOWNLOADED_HASH_LIST
+[ -f $LOG_PATH_ERRORS ] && rm -f $LOG_PATH_ERRORS
+[ -f $LOG_PATH_DOWNLOAD_HASHES ] && rm -f $LOG_PATH_DOWNLOAD_HASHES
+[ -f $LOG_PATH_DUPLICATES ] && rm -f $LOG_PATH_DUPLICATES
+[ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] || touch $LOG_PATH_DOWNLOADED_HASH_LIST
+[ -f $LOG_PATH_DOWNLOAD_HASHES ] || touch $LOG_PATH_DOWNLOAD_HASHES
+[ -f $LOG_PATH_FINAL_REPORT ] && rm -f $LOG_PATH_FINAL_REPORT
+[ -f $LOG_PATH_MISSING_HASHES ] && rm -f $LOG_PATH_MISSING_HASHES
+[ -f $LOG_PATH_LOCAL_HASHES_DUPLICATES ] && rm -f $LOG_PATH_LOCAL_HASHES_DUPLICATES
+
+SOLR_PIDS=(${SOLR_PIDS//\\n/})
+CHECKSUM_TYPE_FIRST=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${SOLR_PIDS[0]}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
+
+case "$CHECKSUM_TYPE_FIRST" in
+  SHA-1)
+    CHECKSUM_TYPE_TO_USE="sha1sum"
+    ;;
+  SHA-256)
+    CHECKSUM_TYPE_TO_USE="sha256sum"
+    ;;
+  SHA-512)
+    CHECKSUM_TYPE_TO_USE="sha512sum"
+    ;;
+  md5)
+    CHECKSUM_TYPE_TO_USE="md5sum"
+    ;;
+  *)
+    CHECKSUM_TYPE_TO_USE="sha256sum"
+esac
+
 
 while true; do
   if [[ -f $LOG_PATH_LOCAL_HASHES ]] ; then
+    echo -e "\n\n\e[96m"
     read -p "A hash log file already exist for these. Would you like to regerate the local hashes? " yn
+    echo -e "\033[0m"
   else
     yn=y
   fi
@@ -171,7 +222,7 @@ while true; do
       COUNTER=0
       BIGCOUNTER=0
       hash_it(){
-        hash_check="$(sha256sum $1)"
+        hash_check="$($CHECKSUM_TYPE_TO_USE $1)"
         echo "${hash_check}" >> $LOG_PATH_LOCAL_HASH_LIST
         echo "${hash_check%%[[:space:]]*}" >> $LOG_PATH_LOCAL_HASHES
       }
@@ -192,20 +243,10 @@ while true; do
   esac
 done
 
-echo -e "\n\n\nWaiting for the last to write to log."
+echo -e "\n\n\t\tWaiting for the last to write to log."
 wait
-echo -e "\n\t\tHashing local files complete.\n\n"
+echo -e "\n\t\t\tHashing local files complete.\n\n"
 
-[ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] && rm -f $LOG_PATH_DOWNLOADED_HASH_LIST
-[ -f $LOG_PATH_ERRORS ] && rm -f $LOG_PATH_ERRORS
-[ -f $LOG_PATH_DOWNLOAD_HASHES ] && rm -f $LOG_PATH_DOWNLOAD_HASHES
-[ -f $LOG_PATH_DUPLICATES ] && rm -f $LOG_PATH_DUPLICATES
-[ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] || touch $LOG_PATH_DOWNLOADED_HASH_LIST
-[ -f $LOG_PATH_DOWNLOAD_HASHES ] || touch $LOG_PATH_DOWNLOAD_HASHES
-[ -f $LOG_PATH_FINAL_REPORT ] && rm -f $LOG_PATH_FINAL_REPORT
-[ -f logs/$LOG_PATH_MISSING_HASHES ] && rm -f $LOG_PATH_MISSING_HASHES
-
-SOLR_PIDS=(${SOLR_PIDS//\\n/})
 COUNTER="${#SOLR_PIDS[@]}"
 ORIGINAL_STARTTIME=$(date +%s)
 AVERAGE=0
@@ -213,20 +254,20 @@ sort -o $LOG_PATH_LOCAL_HASHES $LOG_PATH_LOCAL_HASHES
 sed -i '/^$/d' $LOG_PATH_LOCAL_HASHES
 sort -u -o $LOG_PATH_LOCAL_HASH_LIST $LOG_PATH_LOCAL_HASH_LIST
 
-echo -e "\n\t\tHashing files from ${COLLECTION_NAME} collection on ${DOMAIN}\n\n"
+echo -e "\n\t\tHashing files from ${COLLECTION_PARENT_NAME} collection on ${DOMAIN}\n\n"
 for i in "${SOLR_PIDS[@]}"; do
   STARTTIME=$(date +%s)
   echo -e "\t${COUNTER} of ${#SOLR_PIDS[@]} PIDS."
   [[ -f download ]] && rm -f download
   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}")
   CHECKSUM_TYPE=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
-  if [[ ! $CHECKSUM_TYPE == "SHA-256" ]]; then
+  if [[ ! $CHECKSUM_TYPE == $CHECKSUM_TYPE_FIRST ]]; then
     PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}/datastream/OBJ/download")
     echo -e "\tDownloading Object for PID ${i} via ${OBJECT_URL}/${i}/datastream/OBJ/download"
     $(curl -O -L "${OBJECT_URL}/${i}/datastream/OBJ/download" --silent)
     echo -e "\tDownloaded PAGE PID ${i}"
     echo -e "\tHashing file download"
-    declare regex="$(sha256sum download)"
+    declare regex="$($CHECKSUM_TYPE_TO_USE download)"
   else
     declare regex=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksum>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
   fi
@@ -252,17 +293,25 @@ for i in "${SOLR_PIDS[@]}"; do
   [ $COUNTER -lt "${#SOLR_PIDS[@]}" ] && CURRENT_POSITION_AVERAGE=$(bc <<< "($ENDTIME - $ORIGINAL_STARTTIME) / (${#SOLR_PIDS[@]} - $COUNTER)");
   AVERAGE=$(bc <<< "(($ENDTIME - $STARTTIME) + $AVERAGE + $CURRENT_POSITION_AVERAGE) / 3");
   REMAINING=$(bc <<< "($AVERAGE * $COUNTER) / 60");
+  [ $REMAINING -lt 2 ] && REMAINING="~1"
   echo -e "\t    Roughly ${REMAINING} minutes remaining for hashing.\n\n"
   [[ -f download ]] && rm -f download
 done
 
 printf "%0$(tput cols)d" 0 | tr '0' '='
-echo ""
-echo -e "$(< $LOG_PATH_LOCAL_HASHES wc -l) hashes were generated for the ${CHECK_COUNTING_FILES_COUNT} local files."
-echo -e "$(< $LOG_PATH_DOWNLOAD_HASHES wc -l) hashes were generated for the ${SOLR_COUNT} web hosted files."
+echo -e "\n"
+if [ ! "$SOLR_COUNT" -eq "$CHECK_COUNTING_FILES_COUNT" ]; then
+  echo -e "\e[94mNumbers don't match: file count to Solr count.\033[0m"
+  echo -e "\t$(< $LOG_PATH_LOCAL_HASHES wc -l) local files to ${SOLR_COUNT} web hosted objects."
+else
+  echo -e "Solr count \e[32mmatches\033[0m the number of files in the specified directory."
+  echo -e "\tThis doesn't mean that it's correct, this could always be a false positive by itself\n but with the hash checks this could be a good indicator everything is in the Fedora/Islandora.\n"
+fi
+echo -e "\n$(< $LOG_PATH_LOCAL_HASHES wc -l) hashes were generated for the ${CHECK_COUNTING_FILES_COUNT} local files."
+echo -e "$(< $LOG_PATH_DOWNLOAD_HASHES wc -l) hashes were generated for the ${SOLR_COUNT} web hosted objects."
 
 [[ -f $LOG_PATH_MISSING ]] && rm -f $LOG_PATH_MISSING
-echo -e "\nLooking at local filesystem hashes for hashes missing from the web hosted image hash list.\n\n"
+echo -e "\n\nLooking at local filesystem hashes for hashes missing from the web hosted image hash list.\n\n"
 echo "$(comm -23 <(sort $LOG_PATH_LOCAL_HASHES) <(sort $LOG_PATH_DOWNLOAD_HASHES) | cut -f1 -d" ")" > $LOG_PATH_MISSING_HASHES
 
 
@@ -275,28 +324,34 @@ while IFS= read -r -u13 line; do
 done 13<"$LOG_PATH_MISSING_HASHES"
 
 [[ -f $LOG_PATH_MISSING ]] && echo -e "\n\n\e[31mItem Missing from collection or duplicate local copy: \033[0m\n\t$(cat $LOG_PATH_MISSING)\n\n\t end of missing.\n\n"
-[[ -f $LOG_PATH_MISSING ]] || echo -e "\t\e[32mNo missing hashes identified.\033[0m\n\n"
+[[ -f $LOG_PATH_MISSING ]] || echo -e "\t\e[32mAll local hashes have located match online.\033[0m\n\n"
 
-echo -e "\nLooking at hashes from the web hosted images for duplicates.\n\n"
-
-if [ $(sort $LOG_PATH_DOWNLOAD_HASHES | uniq -d) ]; then
-  while read -r nline; do
-    # Compares the hash only part of the string to find the PID with the hash.
-    this_hash=$(grep "$nline" $LOG_PATH_DOWNLOADED_HASH_LIST)
-    echo -e "$this_hash" >> $LOG_PATH_DUPLICATES
-  done <<< $(sort $LOG_PATH_DOWNLOAD_HASHES | uniq -d)
-  echo -e "\n\n\n\tDuplicates:\n$(cat $LOG_PATH_DUPLICATES)\n\tEnd of duplicates.\n\n"
+echo -e "\nLooking at local file system hashes for duplicates."
+if has_duplicates "${LOG_PATH_LOCAL_HASHES}"; then
+  while IFS= read -r fsline; do
+    this_hash=$(grep "$fsline" $LOG_PATH_LOCAL_HASH_LIST)
+    echo -e "$this_hash\n" >> $LOG_PATH_LOCAL_HASHES_DUPLICATES
+  done < <(sort $LOG_PATH_LOCAL_HASHES | uniq -d)
+  echo -e "\t\e[31mDuplicates\033[0m:\n\n\e[95m$(cat $LOG_PATH_LOCAL_HASHES_DUPLICATES)\033[0m\n\n\tEnd of duplicates.\n"
 else
   echo -e "\t\e[32mNone found.\033[0m\n\n"
 fi
 
-if [ ! "$SOLR_COUNT" -eq "$CHECK_COUNTING_FILES_COUNT" ]; then
-  echo -e "\tNumbers don't match: file count to Solr count."
+echo -e "\nLooking at hashes from the web hosted images for duplicates."
+if has_duplicates "${LOG_PATH_DOWNLOAD_HASHES}"; then
+  while IFS= read -r nline; do
+    this_hash=$(grep "$nline" $LOG_PATH_DOWNLOADED_HASH_LIST)
+    echo -e "$this_hash\n" >> $LOG_PATH_DUPLICATES
+  done < <(sort $LOG_PATH_DOWNLOAD_HASHES | uniq -d)
+  echo -e "\t\e[31mDuplicates\033[0m:\n\n\e[95m$(cat $LOG_PATH_DUPLICATES)\033[0m\n\n\tEnd of duplicates.\n"
 else
-  echo -e "\n\nSolr count \e[32mmatches\033[0m the number of files in the specified directory."
-  echo -e "\tThis doesn't mean that it's correct, this could alweays be a false positive by itself\n but with the hash checks this could be a good indicator everything is in the Fedora/Islandora.\n"
+  echo -e "\t\e[32mNone found.\033[0m\n\n"
 fi
+
 
 [[ -f $LOG_PATH_ERRORS ]] && echo -e "\n\nCollection Errors: \n\t$(cat $LOG_PATH_ERRORS)"
 
-echo -e "\n\n\t done\n\n\n"
+printf "%0$(tput cols)d" 0 | tr '0' '='
+echo -e "\n\n\t \e[32m - - - - - - done - - - - - - \033[0m\n"
+printf "%0$(tput cols)d" 0 | tr '0' '='
+echo -e "\n\n\n"
