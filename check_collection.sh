@@ -266,6 +266,11 @@ for i in "${SOLR_PIDS[@]}"; do
   [[ -f download ]] && rm -f download
   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}")
   [ ! $PAGE_STATUS == 200 ] && echo "PID ${i} came back with a status code of ${PAGE_STATUS}"
+  FEDORA_PAGE_STATUS=$(curl -u ${FEDORAUSERNAME}:${FEDORAPASS} --write-out %{http_code} --silent --output /dev/null "${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml")
+  if [ ! $FEDORA_PAGE_STATUS == 200 ]; then
+    echo -e "\n\n Check Fedora Username | Password\n\n\n"
+    exit
+  fi
   CHECKSUM_TYPE=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
   if [[ ! $CHECKSUM_TYPE == $CHECKSUM_TYPE_FIRST ]]; then
     PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}/datastream/OBJ/download")
@@ -284,13 +289,12 @@ for i in "${SOLR_PIDS[@]}"; do
   echo -e "\tHash complete."
   if grep -Fxq $regex_m $local_file_hashes
   then
-    echo -e "${OBJECT_URL}/${i}/ $(grep -r ${regex_m} $LOG_PATH_LOCAL_HASH_LIST) ${regex_m}\n" >> $LOG_PATH_FINAL_REPORT
+    echo -e "${OBJECT_URL}/${i}/ $(grep -r $regex_m $LOG_PATH_LOCAL_HASH_LIST) $regex_m \n" >> $LOG_PATH_FINAL_REPORT
     echo -e "\t\e[32m Hash matches original\033[0m\n\t\t${regex_m}"
   else
     echo -e "File hash has no match\n\t${OBJECT_URL}/${i}" >> $LOG_PATH_ERRORS
     echo -e "\t\e[31m File hash has no match\033[0m\n\t\t${regex_m}"
   fi
-  wait
   let COUNTER=COUNTER-1
   ENDTIME=$(date +%s)
   [ $AVERAGE -eq 0 ] && AVERAGE=$(bc <<< "($ENDTIME - $STARTTIME)");
