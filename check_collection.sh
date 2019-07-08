@@ -54,6 +54,17 @@ else
   CORE_COUNT=2
 fi
 
+# In case process is terminated.
+cleanup_files() {
+  echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
+  remove_array=($LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_ERRORS $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_DUPLICATES $LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_FINAL_REPORT $LOG_PATH_MISSING_HASHES $LOG_PATH_LOCAL_HASHES_DUPLICATES $LOG_PATH_LIST)
+  for rmf in ${remove_array[@]}; do
+    [ -f $rmf ] && rm -f $rmf
+  done
+}
+cleanup_files
+trap cleanup_files EXIT
+
 config_read_file() {
   (grep -E "^${2}=" -m 1 "${1}" 2>/dev/null || echo "VAR=__UNDEFINED__") | head -n 1 | cut -d '=' -f 2-;
 }
@@ -63,8 +74,7 @@ config_get() {
   printf -- "%s" "${val}";
 }
 
-has_duplicates()
-{
+has_duplicates() {
   {
     sort | uniq -d | grep . -qc
   } < "$1"
@@ -82,9 +92,7 @@ SOLR_DOMAIN_AND_PORT="${SOLR_DOMAIN_AND_PORT%/}"
 COLLECTION_URL="${COLLECTION_URL%/}/${COLLECTION_PARENT_NAME}%3A"
 OBJECT_URL="${OBJECT_URL%/}"
 
-[ -f $LOG_PATH_LIST ] && rm -f $LOG_PATH_LIST
 [ -f $LOG_PATH_LIST ] && touch $LOG_PATH_LIST
-
 
 case "$3" in
   audio)
@@ -176,19 +184,12 @@ echo -e "\t\t\e[32m Count: ${SOLR_COUNT}\033[0m\n"
 
 if [[ $SOLR_COUNT == '' ]]; then
   echo "No PIDS found in Solr"
-echo "$SOLR_DOMAIN_AND_PORT/solr/#/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d'"
+  echo "$SOLR_DOMAIN_AND_PORT/solr/#/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d'"
   exit
 fi
 
-[ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] && rm -f $LOG_PATH_DOWNLOADED_HASH_LIST
-[ -f $LOG_PATH_ERRORS ] && rm -f $LOG_PATH_ERRORS
-[ -f $LOG_PATH_DOWNLOAD_HASHES ] && rm -f $LOG_PATH_DOWNLOAD_HASHES
-[ -f $LOG_PATH_DUPLICATES ] && rm -f $LOG_PATH_DUPLICATES
 [ -f $LOG_PATH_DOWNLOADED_HASH_LIST ] || touch $LOG_PATH_DOWNLOADED_HASH_LIST
 [ -f $LOG_PATH_DOWNLOAD_HASHES ] || touch $LOG_PATH_DOWNLOAD_HASHES
-[ -f $LOG_PATH_FINAL_REPORT ] && rm -f $LOG_PATH_FINAL_REPORT
-[ -f $LOG_PATH_MISSING_HASHES ] && rm -f $LOG_PATH_MISSING_HASHES
-[ -f $LOG_PATH_LOCAL_HASHES_DUPLICATES ] && rm -f $LOG_PATH_LOCAL_HASHES_DUPLICATES
 
 SOLR_PIDS=(${SOLR_PIDS//\\n/})
 CHECKSUM_TYPE_FIRST=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${SOLR_PIDS[0]}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
@@ -258,12 +259,13 @@ sort -o $LOG_PATH_LOCAL_HASHES $LOG_PATH_LOCAL_HASHES
 sed -i '/^$/d' $LOG_PATH_LOCAL_HASHES
 sort -u -o $LOG_PATH_LOCAL_HASH_LIST $LOG_PATH_LOCAL_HASH_LIST
 
-echo -e "\n\t\tHashing files from ${COLLECTION_PARENT_NAME} collection on ${DOMAIN}\n\n"
+echo -e "\n\t\tHashing files from ${COLLECTION_NAMESPACE} collection on ${DOMAIN}\n\n"
 for i in "${SOLR_PIDS[@]}"; do
   STARTTIME=$(date +%s)
   echo -e "\t${COUNTER} of ${#SOLR_PIDS[@]} PIDS."
   [[ -f download ]] && rm -f download
   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}")
+  [ ! $PAGE_STATUS == 200 ] && echo "PID ${i} came back with a status code of ${PAGE_STATUS}"
   CHECKSUM_TYPE=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
   if [[ ! $CHECKSUM_TYPE == $CHECKSUM_TYPE_FIRST ]]; then
     PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}/datastream/OBJ/download")
@@ -275,7 +277,6 @@ for i in "${SOLR_PIDS[@]}"; do
   else
     declare regex=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksum>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
   fi
-  [ ! $PAGE_STATUS == 200 ] && echo "PID ${i} came back with a status code of ${PAGE_STATUS}"
   declare regex_m="${regex%%[[:space:]]*}"
   declare local_file_hashes="$LOG_PATH_LOCAL_HASHES"
   echo "${OBJECT_URL}/${i} ${regex_m}" >> $LOG_PATH_DOWNLOADED_HASH_LIST
@@ -301,7 +302,7 @@ for i in "${SOLR_PIDS[@]}"; do
   echo -e "\t    Roughly ${REMAINING} minutes remaining for hashing.\n\n"
   [[ -f download ]] && rm -f download
 done
-
+let COUNTER=0
 printf "%0$(tput cols)d" 0 | tr '0' '='
 echo -e "\n"
 if [ ! "$SOLR_COUNT" -eq "$CHECK_COUNTING_FILES_COUNT" ]; then
@@ -359,3 +360,4 @@ printf "%0$(tput cols)d" 0 | tr '0' '='
 echo -e "\n\n\t \e[32m - - - - - - done - - - - - - \033[0m\n"
 printf "%0$(tput cols)d" 0 | tr '0' '='
 echo -e "\n\n\n"
+cleanup_files
