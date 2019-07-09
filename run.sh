@@ -164,11 +164,7 @@ PLUSX=0
   select yn in "Yes" "No"; do
     case $yn in
       Yes ) echo "Running sudo chmod +x on each script."
-        sudo chmod +x ${CURRENT_DIR}/check_collection.sh 2>&1
-        sudo chmod +x ${CURRENT_DIR}/check_yaml.sh 2>&1
-        sudo chmod +x ${CURRENT_DIR}/create_dc.sh 2>&1
-        sudo chmod +x ${CURRENT_DIR}/create_mods.sh 2>&1
-        sudo chmod +x ${CURRENT_DIR}/parse_yaml.sh 2>&1
+        sudo chmod +x ${CURRENT_DIR}/*.sh
         break ;;
       No ) echo "Run sudo chmod +x on each .sh file to correct this."
        exit ;;
@@ -658,16 +654,12 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       if [[ "$FAILURES" -gt 0 ]] || [[ "$ADMIN_FAILURES" -gt 0 ]]; then
         echo -e "\n\n\nFailure detected with ${collection}\n\t${FAILURES}\n\n"
 
-        # Set the location where the error folder is.
-        ERROR_LOCATION="${three_errors}/"
-
         # Check to see if there's a naming conflict for error directory.
         if [[ -d "${three_errors}/${basename_of_collection}" ]]; then
-          ERROR_LOCATION="${three_errors}/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+          [[ $TEST_RUN == true ]] || mv "${collection}" "${three_errors}/${basename_of_collection}_NAME_CONFLICT_$(date +%N)"
+        else
+          [[ $TEST_RUN == true ]] || mv "${collection}" "${three_errors}/"
         fi
-
-        # Move to error folder.
-        [[ $TEST_RUN == true ]] || mv "${collection}" "${ERROR_LOCATION}"
 
         # Check if the error occurred after the ingestion process started.
         if [[ $ADMIN_FAILURES -eq 1 ]]; then
@@ -678,7 +670,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         fi
 
       else
-        echo -e "Everything Completed.\n\n\tMoving files to 'completed' directory."
+        echo -e "Everything Completed Successfully.\n\n\tMoving files to 'completed' directory."
 
         # Check to see if there's a naming conflict for completed directory.
         if [[ -d "${four_completed}/${basename_of_collection}" ]]; then

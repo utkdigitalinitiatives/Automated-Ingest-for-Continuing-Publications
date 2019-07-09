@@ -17,6 +17,10 @@ cat << "EOF"
 
 EOF
 OOPS="\n\n\t./check_collection.sh \$1 \$2 \$3\n\t\t\t      \$1 collection PID\n\t\t\t         \$2 /path/to/original/files/\n\t\t\t            \$3 (audio, video, book, pdf, lg OR basic)\n\n\t./check_collection.sh islandora:einstein_oro /path/to/original/files/ audio\n\n\n"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $DIR
+
 if [[ ! -f config.cfg ]]; then
   cp config.cfg.defaults config.cfg
 fi
@@ -56,7 +60,6 @@ fi
 
 # In case process is terminated.
 cleanup_files() {
-  echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
   remove_array=($LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_ERRORS $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_DUPLICATES $LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_FINAL_REPORT $LOG_PATH_MISSING_HASHES $LOG_PATH_LOCAL_HASHES_DUPLICATES $LOG_PATH_LIST)
   for rmf in ${remove_array[@]}; do
     [ -f $rmf ] && rm -f $rmf
@@ -79,6 +82,11 @@ has_duplicates() {
     sort | uniq -d | grep . -qc
   } < "$1"
 }
+center_text() {
+  termwidth="$(tput cols)"
+  padding="$(printf '%0.1s' ={1..500})"
+  printf '%*.*s %s %*.*s\n' 0 "$(((termwidth-2-${#1})/2))" "$padding" "$1" 0 "$(((termwidth-1-${#1})/2))" "$padding"
+}
 
 DOMAIN=$(config_get CHECK_COLLECTION_DOMAIN)
 SOLR_DOMAIN_AND_PORT=$(config_get CHECK_COLLECTION_SOLR_DOMAIN_AND_PORT)
@@ -91,6 +99,10 @@ DOMAIN="${DOMAIN%/}"
 SOLR_DOMAIN_AND_PORT="${SOLR_DOMAIN_AND_PORT%/}"
 COLLECTION_URL="${COLLECTION_URL%/}/${COLLECTION_PARENT_NAME}%3A"
 OBJECT_URL="${OBJECT_URL%/}"
+if [[ "${COLLECTION_URL}" == "__UNDEFINED__" ]]; then
+  echo -e "Problem reading config file."
+  exit
+fi
 
 [ -f $LOG_PATH_LIST ] && touch $LOG_PATH_LIST
 
@@ -215,7 +227,7 @@ esac
 while true; do
   if [[ -f $LOG_PATH_LOCAL_HASHES ]] ; then
     echo -e "\n\n\e[96m"
-    read -p "A hash log file already exist for these. Would you like to regerate the local hashes? " yn
+    read -p "        A hash log file already exist for these. Would you like to regerate the local hashes? " yn
     echo -e "\033[0m"
   else
     yn=y
@@ -236,21 +248,21 @@ while true; do
         let COUNTER+=1
         let BIGCOUNTER+=1
         echo -ne "\t#${BIGCOUNTER} \e[96m${file}\033[0m \033[0K\r"
-        if [ $COUNTER -gt 7 ]; then
+        if [ $COUNTER -gt $CORE_COUNT ]; then
           wait
           let COUNTER=0
         fi
         hash_it "${file}" &
         [ "${3}" == video ] && sleep 1
       done; break ;;
-    [Nn]* ) echo "Using existing hashes."; break ;;
+    [Nn]* ) echo -e "\tUsing existing hashes."; break ;;
     * ) echo "Please answer yes or no." ;;
   esac
 done
 
-echo -e "\n\n\t\tWaiting for the last to write to log."
+echo -e "\t\tWaiting for the last to write to log."
 wait
-echo -e "\n\t\t\tHashing local files complete.\n\n"
+echo -e "\t\t\tHashing local files complete.\n\n"
 
 COUNTER="${#SOLR_PIDS[@]}"
 ORIGINAL_STARTTIME=$(date +%s)
@@ -277,16 +289,18 @@ for i in "${SOLR_PIDS[@]}"; do
     echo -e "\tDownloading Object for PID ${i} via ${OBJECT_URL}/${i}/datastream/OBJ/download"
     $(curl -O -L "${OBJECT_URL}/${i}/datastream/OBJ/download" --silent)
     echo -e "\tDownloaded PAGE PID ${i}"
-    echo -e "\tHashing file download"
+    echo -e "\tHashing downloaded file."
     declare regex="$($CHECKSUM_TYPE_TO_USE download)"
+    echo -e "\t${CHECKSUM_TYPE} hashing downloaded file complete."
   else
     declare regex=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksum>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
+    echo -e "\t${CHECKSUM_TYPE} hash download from fedora complete."
   fi
   declare regex_m="${regex%%[[:space:]]*}"
   declare local_file_hashes="$LOG_PATH_LOCAL_HASHES"
   echo "${OBJECT_URL}/${i} ${regex_m}" >> $LOG_PATH_DOWNLOADED_HASH_LIST
   echo "$regex_m" >> $LOG_PATH_DOWNLOAD_HASHES
-  echo -e "\tHash complete."
+  echo -e "\tHash processing complete."
   if grep -Fxq $regex_m $local_file_hashes
   then
     echo -e "${OBJECT_URL}/${i}/ $(grep -r $regex_m $LOG_PATH_LOCAL_HASH_LIST) $regex_m \n" >> $LOG_PATH_FINAL_REPORT
@@ -307,22 +321,25 @@ for i in "${SOLR_PIDS[@]}"; do
   [[ -f download ]] && rm -f download
 done
 let COUNTER=0
-printf "%0$(tput cols)d" 0 | tr '0' '='
+# printf "%0$(tput cols)d" 0 | tr '0' '='
+center_text Report
 echo -e "\n"
+
+ENDCOLORIZE="\033[0m"
 if [ ! "$SOLR_COUNT" -eq "$CHECK_COUNTING_FILES_COUNT" ]; then
-  echo -e "\e[94mNumbers don't match: file count to Solr count.\033[0m"
-  echo -e "\t$(< $LOG_PATH_LOCAL_HASHES wc -l) local files to ${SOLR_COUNT} web hosted objects."
+  COLORIZE="\e[31m"
+  echo -e "Numbers ${COLORIZE}don't${ENDCOLORIZE} match: file count to Solr count."
+  echo -e "\t${COLORIZE}$(< $LOG_PATH_LOCAL_HASHES wc -l)${ENDCOLORIZE} local files to ${COLORIZE}${SOLR_COUNT}${ENDCOLORIZE} web hosted objects."
 else
-  echo -e "Solr count \e[32mmatches\033[0m the number of files in the specified directory."
+  COLORIZE="\e[32m"
+  echo -e "Solr count \e[32mmatches${ENDCOLORIZE} the number of files in the specified directory."
   echo -e "\tThis doesn't mean that it's correct, this could always be a false positive by itself\n but with the hash checks this could be a good indicator everything is in the Fedora/Islandora.\n"
 fi
-echo -e "\n$(< $LOG_PATH_LOCAL_HASHES wc -l) hashes were generated for the ${CHECK_COUNTING_FILES_COUNT} local files."
-echo -e "$(< $LOG_PATH_DOWNLOAD_HASHES wc -l) hashes were generated for the ${SOLR_COUNT} web hosted objects."
+echo -e "\n${COLORIZE}$(< $LOG_PATH_LOCAL_HASHES wc -l)${ENDCOLORIZE} hashes were generated for the ${COLORIZE}${CHECK_COUNTING_FILES_COUNT}${ENDCOLORIZE} local files."
+echo -e "${COLORIZE}$(< $LOG_PATH_DOWNLOAD_HASHES wc -l)${ENDCOLORIZE} hashes were generated for the ${COLORIZE}${SOLR_COUNT}${ENDCOLORIZE} web hosted objects."
 
 [[ -f $LOG_PATH_MISSING ]] && rm -f $LOG_PATH_MISSING
-echo -e "\n\nLooking at local filesystem hashes for hashes missing from the web hosted image hash list.\n\n"
 echo "$(comm -23 <(sort $LOG_PATH_LOCAL_HASHES) <(sort $LOG_PATH_DOWNLOAD_HASHES) | cut -f1 -d" ")" > $LOG_PATH_MISSING_HASHES
-
 
 sort -u -o $LOG_PATH_MISSING_HASHES $LOG_PATH_MISSING_HASHES
 while IFS= read -r -u13 line; do
@@ -332,36 +349,33 @@ while IFS= read -r -u13 line; do
   fi
 done 13<"$LOG_PATH_MISSING_HASHES"
 
-[[ -f $LOG_PATH_MISSING ]] && echo -e "\n\n\e[31mItem Missing from collection or duplicate local copy: \033[0m\n\t$(cat $LOG_PATH_MISSING)\n\n\t end of missing.\n\n"
+[[ -f $LOG_PATH_MISSING ]] && echo -e "\n\n${COLORIZE} > > > > > > Item missing from collection or duplicate local copy < < < < < < ${ENDCOLORIZE}\n$(cat $LOG_PATH_MISSING)\n\n\t${COLORIZE}- - - - - - End of missing - - - - - -${ENDCOLORIZE}"
 [[ -f $LOG_PATH_MISSING ]] || echo -e "\t\e[32mAll local hashes have located match online.\033[0m\n\n"
 
-echo -e "\nLooking at local file system hashes for duplicates."
+echo -e "\n\n\nLooking at local file system hashes for duplicates."
 if has_duplicates "${LOG_PATH_LOCAL_HASHES}"; then
   while IFS= read -r fsline; do
     this_hash=$(grep "$fsline" $LOG_PATH_LOCAL_HASH_LIST)
     echo -e "$this_hash\n" >> $LOG_PATH_LOCAL_HASHES_DUPLICATES
   done < <(sort $LOG_PATH_LOCAL_HASHES | uniq -d)
-  echo -e "\t\e[31mDuplicates\033[0m:\n\n\e[95m$(cat $LOG_PATH_LOCAL_HASHES_DUPLICATES)\033[0m\n\n\tEnd of duplicates.\n"
+  echo -e "\n${COLORIZE} > > > > > > Found local file duplicates < < < < < < ${ENDCOLORIZE}\n\nHASH Values \t\t\t\t File Path\n\e[95m$(cat $LOG_PATH_LOCAL_HASHES_DUPLICATES)\033[0m\n\n\t${COLORIZE}- - - - - - End of duplicates - - - - - -${ENDCOLORIZE}\n"
 else
-  echo -e "\t\e[32mNone found.\033[0m\n\n"
+  echo -e "\t\e[32m- - - - - - No duplicates found - - - - - -\033[0m\n\n"
 fi
 
-echo -e "\nLooking at hashes from the web hosted images for duplicates."
+echo -e "\n\n\nLooking at hashes from the web hosted images for duplicates."
 if has_duplicates "${LOG_PATH_DOWNLOAD_HASHES}"; then
   while IFS= read -r nline; do
     this_hash=$(grep "$nline" $LOG_PATH_DOWNLOADED_HASH_LIST)
     echo -e "$this_hash\n" >> $LOG_PATH_DUPLICATES
   done < <(sort $LOG_PATH_DOWNLOAD_HASHES | uniq -d)
-  echo -e "\t\e[31mDuplicates\033[0m:\n\n\e[95m$(cat $LOG_PATH_DUPLICATES)\033[0m\n\n\tEnd of duplicates.\n"
+  echo -e "\e[31mDuplicates\033[0m:\n\e[95m$(cat $LOG_PATH_DUPLICATES)\033[0m\n\n\t- - - - - - End of duplicates - - - - - -\n"
 else
-  echo -e "\t\e[32mNone found.\033[0m\n\n"
+  echo -e "\t\e[32m- - - - - - No duplicates found - - - - - -\033[0m\n\n"
 fi
-
 
 [[ -f $LOG_PATH_ERRORS ]] && echo -e "\n\nCollection Errors: \n\t$(cat $LOG_PATH_ERRORS)"
 
-printf "%0$(tput cols)d" 0 | tr '0' '='
-echo -e "\n\n\t \e[32m - - - - - - done - - - - - - \033[0m\n"
-printf "%0$(tput cols)d" 0 | tr '0' '='
+center_text done
 echo -e "\n\n\n"
 cleanup_files
