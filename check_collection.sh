@@ -123,7 +123,6 @@ case "$3" in
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_videoCModel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
     echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
-    echo -e "\t\tcomplete\n"
     ;;
   book)
     echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
@@ -132,7 +131,6 @@ case "$3" in
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3ApageCModel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
     echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
-    echo -e "\t\tcomplete\n"
     ;;
   lg)
     echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
@@ -141,7 +139,6 @@ case "$3" in
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_large_image_cmodel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
     echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
-    echo -e "\t\tcomplete\n"
     ;;
   basic)
     echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
@@ -150,7 +147,6 @@ case "$3" in
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_basic_image"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
     echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
-    echo -e "\t\tcomplete\n"
     ;;
   pdf)
     echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
@@ -159,7 +155,6 @@ case "$3" in
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_pdf"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
     echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
-    echo -e "\t\tcomplete\n"
     ;;
   *)
     echo -e "$OOPS"
@@ -189,7 +184,7 @@ connect_to_collection(){
 }
 (connect_to_collection)
 
-echo -e "\n\tGetting PIDs and count of all of the objects within $COLLECTION_PARENT_NAME collection\n"
+echo -e "\n\tGetting PIDs and count of all of the objects within the '$COLLECTION_PARENT_NAME' collection"
 SOLR_COUNT=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true" | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d' )
 SOLR_PIDS=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*&sort=PID+asc${CONTENT_MODEL}&rows=100000&fl=PID&wt=csv&indent=true" | tail -n +2)
 echo -e "\t\t\e[32m Count: ${SOLR_COUNT}\033[0m\n"
@@ -255,12 +250,12 @@ while true; do
         hash_it "${file}" &
         [ "${3}" == video ] && sleep 1
       done; break ;;
-    [Nn]* ) echo -e "\tUsing existing hashes."; break ;;
+    [Nn]* ) echo -e "\t\tUsing existing hashes."; break ;;
     * ) echo "Please answer yes or no." ;;
   esac
 done
 
-echo -e "\t\tWaiting for the last to write to log."
+echo -e "\n\t\tWaiting for the last to write to log."
 wait
 echo -e "\t\t\tHashing local files complete.\n\n"
 
@@ -271,7 +266,7 @@ sort -o $LOG_PATH_LOCAL_HASHES $LOG_PATH_LOCAL_HASHES
 sed -i '/^$/d' $LOG_PATH_LOCAL_HASHES
 sort -u -o $LOG_PATH_LOCAL_HASH_LIST $LOG_PATH_LOCAL_HASH_LIST
 
-echo -e "\n\t\tHashing files from ${COLLECTION_NAMESPACE} collection on ${DOMAIN}\n\n"
+echo -e "\n\n\tHashing files from the '\e[96m${COLLECTION_NAMESPACE}\033[0m' collection on \e[96m${DOMAIN}\033[0m\n\n\n"
 for i in "${SOLR_PIDS[@]}"; do
   STARTTIME=$(date +%s)
   echo -e "\t${COUNTER} of ${#SOLR_PIDS[@]} PIDS."
@@ -320,9 +315,10 @@ for i in "${SOLR_PIDS[@]}"; do
   echo -e "\t    Roughly ${REMAINING} minutes remaining for hashing.\n\n"
   [[ -f download ]] && rm -f download
 done
+
 let COUNTER=0
-# printf "%0$(tput cols)d" 0 | tr '0' '='
-center_text Report
+echo -e "\n\n"
+center_text " ==== === == =   Report   =  == === ==== "
 echo -e "\n"
 
 ENDCOLORIZE="\033[0m"
@@ -376,6 +372,6 @@ fi
 
 [[ -f $LOG_PATH_ERRORS ]] && echo -e "\n\nCollection Errors: \n\t$(cat $LOG_PATH_ERRORS)"
 
-center_text done
+center_text " ==== === == =   Done   =  == === ==== "
 echo -e "\n\n\n"
 cleanup_files
