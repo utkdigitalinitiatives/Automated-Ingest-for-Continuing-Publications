@@ -72,7 +72,7 @@ function cleanup_files {
   [ -f '${MAIN_TMP}/simpledc20021212.xsd' ] && rm -f ${MAIN_TMP}/simpledc20021212.xsd
   [ -f '${MAIN_TMP}/*_MODS.xml' ] && rm -rf ${MAIN_TMP}/*_MODS.xml
   echo -e "\n\tProcess terminated. EXIT signal recieved.\n\n"
-  [ -d "${three_errors}" ] && echo -e "Process terminated. EXIT signal recieved." >> "${three_errors}/problems_with_start.txt"
+  echo -e "\e[33m - - - - - - exiting\033[0m\n\n"
   [ $WORKING_TMP == 0 ] || rm -rf "${WORKING_TMP_DIR}"
   rm -rf ${MAIN_TMP}
 }
@@ -98,7 +98,7 @@ fi
 # Replace url with string to downloaded version.
 sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
 
-cd $WORKING_HOME_DIR
+cd $WORKING_HOME_DIR &>/dev/null
 
 rm -f ${three_errors}/problems_with_start.txt
 
@@ -228,15 +228,15 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       # Reset files.
       find $FOLDER/book -type f -name 'DC.xml' -ls -delete
       find $FOLDER/book -type f -name 'MODS.xml' -ls -delete
-
+      echo -e "\n\nRenaming files with problematic conventions."
       # Correct if filename for MODS/PDF is lowercase or the extension is uppercase.
-      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.*
-      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*.*
+      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*.* > /dev/null 2>&1
+      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*.* > /dev/null 2>&1
 
       # Correct if filename for OBJ/OCR is lowercase or the extension is uppercase.
-      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*/*.*
-      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*/*.*
-
+      rename $forced's/\.([^.]+)$/.\L$1/' $FOLDER/*/*/*/*.* > /dev/null 2>&1
+      rename $forced's/([^.]*)/\U$1/' $FOLDER/*/*/*/*.* > /dev/null 2>&1
+      echo -e "\e[32m - - - - - - Complete \033[0m\n\n"
       # Look for unexpected files inside of the ready_to_process folder
       EXTRA_FILES_FOUND=$(find $FOLDER/* -maxdepth 0 -name \* -and -type f | wc -l)
 
@@ -265,20 +265,25 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       done # End of SUBFOLDER loop
 
       # Create MODS and validate.
-      cd $WORKING_HOME_DIR
+      cd $WORKING_HOME_DIR &>/dev/null
 
       for YML_FILE in $FOLDER/*/*.yml; do
         # Need to combine some of this.
-        [ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).xml ] || echo -e "Missing collection_template XML file." >> ${three_errors}/$(basename ${FOLDER}).txt
+        if [ ! -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).xml ]; then
+          echo -e "Missing collection_template XML file." >> ${three_errors}/$(basename ${FOLDER}).txt
+          let FAILURES=FAILURES+1
+        fi
         if [[ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).yml ]]; then
           if [[ -f ${CURRENT_DIR}/collection_templates/$(basename ${FOLDER}).xml ]]; then
             if [[ $(/bin/bash ${CURRENT_DIR}/check_yaml.sh $YML_FILE) == "fail" ]];  then
               echo -e >&2 "\n\n\n\tYAML file didn't pass checks. Empty value detected.\n\n\n" >> "${three_errors}/$(basename ${FOLDER}).txt"
+              let FAILURES=FAILURES+1
             fi
             /bin/bash ${CURRENT_DIR}/create_mods.sh "${WORKING_HOME_DIR}/${YML_FILE%.yml}" "${FOLDER}" "${WORKING_HOME_DIR}"
           fi
         else
           echo -e "Missing collection_template YAML file." >> ${three_errors}/$(basename ${FOLDER}).txt
+          let FAILURES=FAILURES+1
         fi
       done
 
@@ -302,7 +307,6 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
         /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${FOLDER}" "${WORKING_HOME_DIR}"
         let COUNTER=COUNTER+1
-        echo "Counter = $COUNTER"
         sleep $seconds_to_slowdown_validation
         if [[ $COUNTER -gt 30 ]]; then
           sleep $seconds_for_a_pause_validation
@@ -310,7 +314,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         fi
 
       done
-      cd -
+      cd -  &>/dev/null
       # Page level directory checks.
       # ----------------------------------------------------------------------------
       for PAGE_FOLDER in $FOLDER/*/*/*; do
@@ -429,11 +433,11 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
                 # Create initial hashes
                 images=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2")
-                for file in $images
-                do
-                    hash_check="$(sha256sum $file)"
+                for file in $images; do
+                    hash_check="$(ionice -c2 sha256sum $file)"
                     echo "${hash_check%%[[:space:]]*}" >> ${MAIN_TMP}/hashes.txt
                 done
+                sort -o ${MAIN_TMP}/hashes.txt ${MAIN_TMP}/hashes.txt
 
                 rsync -avz "${WORKING_HOME_DIR}/${D}" $WORKING_TMP_DIR
                 if [ "$?" -eq "0" ]; then
@@ -444,7 +448,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 fi
 
                 INGESTION_STARTED="${collection}"
-
+                $($DRUSH --root=$DRUPAL_HOME_DIR -v ev 'variable_set("islandora_book_ingest_derivatives", array ("pdf" => 0, "image" => "image", "ocr" => "ocr"));')
                 # Book queuing for ingestion.
                 $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_book_batch_preprocess --parent=$book_parent --namespace=$namespace --type=directory --uri=$BASE_URI --$DRUSH_VERSION_TARGET=$target --output_set_id=TRUE >> ${MAIN_TMP}/automated_ingestion.log)
 
@@ -455,6 +459,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
                 # Ingesting book
                 $($DRUSH -v --root=$DRUPAL_HOME_DIR $DRUPAL_USER islandora_batch_ingest >> ${MAIN_TMP}/automated_ingestion.log)
+                $($DRUSH --root=$DRUPAL_HOME_DIR ev 'variable_set("islandora_book_ingest_derivatives", array ("pdf" => 0, "image" => "image", "ocr" => 0));')
 
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
@@ -475,10 +480,10 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                   PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
                   [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
                   # Hash each PID's object to check if it was found.
-                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/view" --output ${MAIN_TMP}/test{i}.tif)
+                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/download" --output ${MAIN_TMP}/test{i})
 
                     declare file="${MAIN_TMP}/hashes.txt"
-                    declare regex="$(sha256sum ${MAIN_TMP}/test{i}.tif)"
+                    declare regex="$(ionice -c2 sha256sum ${MAIN_TMP}/test{i})"
                     declare regex_m="${regex%%[[:space:]]*}"
                     echo -e "List of Hashes: \n$(cat $file)\n\n"
                     if grep -Fxq $regex_m $file
@@ -487,7 +492,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                         else
                             echo -e "Page hash has no match\n\t${BASE_URL}/${i}" >> ${three_errors}/$(basename ${collection}).txt
                     fi
-                    rm -f ${MAIN_TMP}/test{i}.tif
+                    rm -f ${MAIN_TMP}/test{i}
                 done
                 unset target
                 rm -rf "${MAIN_TMP}/$(basename $FOLDER)_$(basename $D)"
@@ -555,7 +560,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # Basic image ingest content
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
-              cd $DRUPAL_HOME_DIR
+              cd $DRUPAL_HOME_DIR &>/dev/null
               echo "" > ${MAIN_TMP}/automated_ingestion.log
               echo "Basic -----> $basic_img_parent"
               INGESTION_STARTED="${collection}"
@@ -576,7 +581,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 let INGESTION_STARTED=0
               fi
               unset msg
-              cd -
+              cd - &>/dev/null
             fi
           fi
         fi
@@ -668,7 +673,6 @@ if (( $system_ready == '0' || $system_ready == '1')); then
         else
           echo -e "${MESSAGES}" >> ${three_errors}/$(basename ${collection}).txt
         fi
-
       else
         echo -e "Everything Completed Successfully.\n\n\tMoving files to 'completed' directory."
 
@@ -681,7 +685,6 @@ if (( $system_ready == '0' || $system_ready == '1')); then
 
         echo -e "\tMove Complete.\n\n"
       fi
-
     fi # End/Else of error log check
   done # End of for collection
 

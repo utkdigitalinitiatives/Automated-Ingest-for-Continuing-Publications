@@ -234,7 +234,7 @@ while true; do
       COUNTER=0
       BIGCOUNTER=0
       hash_it(){
-        hash_check="$($CHECKSUM_TYPE_TO_USE $1)"
+        hash_check="$(ionice -c2 $CHECKSUM_TYPE_TO_USE $1)"
         echo "${hash_check}" >> $LOG_PATH_LOCAL_HASH_LIST
         echo "${hash_check%%[[:space:]]*}" >> $LOG_PATH_LOCAL_HASHES
       }
@@ -285,7 +285,7 @@ for i in "${SOLR_PIDS[@]}"; do
     $(curl -O -L "${OBJECT_URL}/${i}/datastream/OBJ/download" --silent)
     echo -e "\tDownloaded PAGE PID ${i}"
     echo -e "\tHashing downloaded file."
-    declare regex="$($CHECKSUM_TYPE_TO_USE download)"
+    declare regex="$(ionice -c2 $CHECKSUM_TYPE_TO_USE download)"
     echo -e "\t${CHECKSUM_TYPE} hashing downloaded file complete."
   else
     declare regex=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksum>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
@@ -295,14 +295,14 @@ for i in "${SOLR_PIDS[@]}"; do
   declare local_file_hashes="$LOG_PATH_LOCAL_HASHES"
   echo "${OBJECT_URL}/${i} ${regex_m}" >> $LOG_PATH_DOWNLOADED_HASH_LIST
   echo "$regex_m" >> $LOG_PATH_DOWNLOAD_HASHES
-  echo -e "\tHash processing complete."
+  echo -e "\tHash processing complete. grep -Fxq $regex_m $local_file_hashes"
   if grep -Fxq $regex_m $local_file_hashes
   then
     echo -e "${OBJECT_URL}/${i}/ $(grep -r $regex_m $LOG_PATH_LOCAL_HASH_LIST) $regex_m \n" >> $LOG_PATH_FINAL_REPORT
     echo -e "\t\e[32m Hash matches original\033[0m\n\t\t${regex_m}"
   else
-    echo -e "File hash has no match\n\t${OBJECT_URL}/${i}" >> $LOG_PATH_ERRORS
-    echo -e "\t\e[31m File hash has no match\033[0m\n\t\t${regex_m}"
+    echo -e "Object file hash has no match\n\t${regex_m}\n\t${OBJECT_URL}/${i}" >> $LOG_PATH_ERRORS
+    echo -e "\t\e[31m Object file hash has no match\033[0m\n\t\t${regex_m}"
   fi
   let COUNTER=COUNTER-1
   ENDTIME=$(date +%s)
