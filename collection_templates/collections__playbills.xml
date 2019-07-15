@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
+    <identifier type="local">0012_003049_000872</identifier>
+    <titleInfo>
+        <title>${title}</title>
+    </titleInfo>
+    <originInfo>
+        <dateIssued>Apr 25, 2013</dateIssued>
+        <dateIssued encoding="edtf">2013-04-25</dateIssued>
+        <dateOther encoding="edtf">2012/2013</dateOther>
+        <place>
+            <placeTerm valueURI="http://id.loc.gov/authorities/names/n80003889">University of Tennessee, Knoxville</placeTerm>
+        </place>
+        <publisher>University of Tennessee Theatre Department</publisher>
+    </originInfo>
+    <subject>
+        <topic valueURI="http://id.loc.gov/authorities/subjects/sh85008007">Art in universities and colleges</topic>
+    </subject>
+    <subject>
+        <topic valueURI="http://id.loc.gov/authorities/subjects/sh85134577">Theater programs</topic>
+    </subject>
+    <subject>
+        <topic valueURI="http://id.loc.gov/authorities/subjects/sh85028396">College theater </topic>
+    </subject>
+    <physicalDescription>
+        <form authority="aat" valueURI="http://vocab.getty.edu/aat/300027216">playbills</form>
+        <internetMediaType>image/jpeg</internetMediaType>
+    </physicalDescription>
+    <typeOfResource>text</typeOfResource>
+    <typeOfResource>still image</typeOfResource>
+    <language>
+        <languageTerm type="text" authority="iso639-2b">English</languageTerm>
+    </language>
+    <relatedItem displayLabel="Project" type="host">
+        <titleInfo>
+            <title>
+                University of Tennessee Theatre Playbills Collection
+            </title>
+        </titleInfo>
+    </relatedItem>
+    <relatedItem displayLabel="Collection" type="host">
+        <titleInfo>
+            <title>University of Tennessee Theatre Collection</title>
+        </titleInfo>
+        <identifier>AR.0235</identifier>
+        <location>
+            <url>http://n2t.net/ark:/87290/v81r6npf</url>
+        </location>
+    </relatedItem>
+    <location>
+        <physicalLocation valueURI="http://id.loc.gov/authorities/names/no2014027633">
+            University of Tennessee, Knoxville. Special Collections
+        </physicalLocation>
+    </location>
+    <recordInfo>
+        <recordContentSource valueURI="http://id.loc.gov/authorities/names/n87808088">University of Tennessee, Knoxville. Libraries</recordContentSource>
+    </recordInfo>
+    <accessCondition type="use and reproduction" xlink:href="http://rightsstatements.org/vocab/InC/1.0/">In Copyright</accessCondition>
+</mods>
