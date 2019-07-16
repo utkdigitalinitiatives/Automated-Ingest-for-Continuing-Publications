@@ -3,7 +3,7 @@
     <identifier type="issn">2641-4775</identifier>
     <identifier type="filename">torch_vol${volume}-no${number}</identifier>
     <titleInfo supplied="yes">
-        <title>The Torchbearer, volume ${volume}, number ${number}</title>
+        <title>The Torchbearer, ${date_Issued}</title>
     </titleInfo>
     <abstract>
         Torchbearer is a magazine for alumni, faculty, staff, and friends of the University of Tennessee, Knoxville. It reports on the accomplishments of students and graduates, research conducted at the university, and sporting achievements.
