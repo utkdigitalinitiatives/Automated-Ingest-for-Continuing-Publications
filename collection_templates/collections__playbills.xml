@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
-    <identifier type="local">0012_003049_000872</identifier>
+    <identifier type="local">${adminDB}</identifier>
     <titleInfo>
         <title>${title}</title>
     </titleInfo>
     <originInfo>
-        <dateIssued>Apr 25, 2013</dateIssued>
-        <dateIssued encoding="edtf">2013-04-25</dateIssued>
-        <dateOther encoding="edtf">2012/2013</dateOther>
+        <dateIssued>${date_Issued}</dateIssued>
+        <dateIssued encoding="edtf">${date_Issued_edtf}</dateIssued>
         <place>
             <placeTerm valueURI="http://id.loc.gov/authorities/names/n80003889">University of Tennessee, Knoxville</placeTerm>
         </place>
@@ -20,7 +19,7 @@
         <topic valueURI="http://id.loc.gov/authorities/subjects/sh85134577">Theater programs</topic>
     </subject>
     <subject>
-        <topic valueURI="http://id.loc.gov/authorities/subjects/sh85028396">College theater </topic>
+        <topic valueURI="http://id.loc.gov/authorities/subjects/sh85028396">College theater</topic>
     </subject>
     <physicalDescription>
         <form authority="aat" valueURI="http://vocab.getty.edu/aat/300027216">playbills</form>
