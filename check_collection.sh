@@ -57,7 +57,7 @@ if [[ -f /proc/cpuinfo ]]; then
 else
   CORE_COUNT=2
 fi
-
+ENDCOLORIZE="\033[0m"
 # In case process is terminated.
 cleanup_files() {
   remove_array=($LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_ERRORS $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_DUPLICATES $LOG_PATH_DOWNLOADED_HASH_LIST $LOG_PATH_DOWNLOAD_HASHES $LOG_PATH_FINAL_REPORT $LOG_PATH_MISSING_HASHES $LOG_PATH_LOCAL_HASHES_DUPLICATES $LOG_PATH_LIST)
@@ -109,52 +109,52 @@ fi
 case "$3" in
   audio)
     # Creating an index of pages in the given directory
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.wav" -o -name "*.mp3")
     echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp-audioCModel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   video)
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.ogg" -o -name "*.mp4" -o -name "*.mov" -o -name "*.qt" -o -name "*.m4v" -o -name "*.avi" -o -name "*.mkv")
     $(echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST)
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_videoCModel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   book)
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.tif" -o -name "*.jp2")
     $(echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST)
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3ApageCModel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   lg)
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.tif" -o -name "*.jp2")
     $(echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST)
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_large_image_cmodel"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   basic)
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.gif" -o -name "*.jpg" -o -name "*.bmp")
     $(echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST)
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_basic_image"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   pdf)
-    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}\033[0m on the filesystem."
+    echo -e "\n\tCounting and indexing \e[36m${FIND_PATTERN}${ENDCOLORIZE} on the filesystem."
     CHECK_COLLECTION_LOCAL_FILES=$(find ${FIND_PATTERN} -type f -name "*.pdf")
     $(echo "${CHECK_COLLECTION_LOCAL_FILES}" > $LOG_PATH_LIST)
     CONTENT_MODEL="&fq=%2BRELS_EXT_hasModel_uri_s%3Ainfo%5C%3Afedora%2Fislandora%5C%3Asp_pdf"
     CHECK_COUNTING_FILES_COUNT=$(cat $LOG_PATH_LIST | sed '/^\s*$/d' | wc -l)
-    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} \033[0m\n"
+    echo -e "\t\t\e[32m ${CHECK_COUNTING_FILES_COUNT} ${ENDCOLORIZE}\n"
     ;;
   *)
     echo -e "$OOPS"
@@ -167,7 +167,7 @@ declare -i count=0
 connect_to_collection(){
   # try up to five times before timing out.
   if [ $count -gt 5 ]; then
-    echo -e "\t  Can not find \"\033[38;5;2m${COLLECTION_URL}${COLLECTION_NAMESPACE}\033[0m\"\n\tLook at the URL after \"collections%3A\" \n\t   ${COLLECTION_URL}\033[38;5;2mCOLLECTION-NAME\033[0m\ \n\n\n"
+    echo -e "\t  Can not find \"\033[38;5;2m${COLLECTION_URL}${COLLECTION_NAMESPACE}${ENDCOLORIZE}\"\n\tLook at the URL after \"collections%3A\" \n\t   ${COLLECTION_URL}\033[38;5;2mCOLLECTION-NAME${ENDCOLORIZE}\ \n\n\n"
     exit 0
   fi
   status=$(curl -s --head "${COLLECTION_URL}${COLLECTION_NAMESPACE}" | head -n 1 | grep "HTTP/1.[01] [23]..")
@@ -179,7 +179,7 @@ connect_to_collection(){
     connect_to_collection
   else
     ((count++))
-    echo -e "\t\t\e[32mCollection check complete\033[0m\n"
+    echo -e "\t\t\e[32mCollection check complete${ENDCOLORIZE}\n"
   fi
 }
 (connect_to_collection)
@@ -187,7 +187,7 @@ connect_to_collection(){
 echo -e "\n\tGetting PIDs and count of all of the objects within the '$COLLECTION_PARENT_NAME' collection"
 SOLR_COUNT=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*${CONTENT_MODEL}&rows=0&fl=PID&wt=xml&indent=true" | sed -n '/numFound="/,/?.*"/p' | grep -o -E '[0-9]+' | sed -e 's/^0\+//' | sed '/^$/d' )
 SOLR_PIDS=$(curl -X GET --silent "$SOLR_DOMAIN_AND_PORT/solr/collection1/select?q=PID%3A${COLLECTION_NAMESPACE}%5C%3A*&sort=PID+asc${CONTENT_MODEL}&rows=100000&fl=PID&wt=csv&indent=true" | tail -n +2)
-echo -e "\t\t\e[32m Count: ${SOLR_COUNT}\033[0m\n"
+echo -e "\t\t\e[32m Count: ${SOLR_COUNT}${ENDCOLORIZE}\n"
 
 if [[ $SOLR_COUNT == '' ]]; then
   echo "No PIDS found in Solr"
@@ -223,7 +223,7 @@ while true; do
   if [[ -f $LOG_PATH_LOCAL_HASHES ]] ; then
     echo -e "\n\n\e[96m"
     read -p "        A hash log file already exist for these. Would you like to regerate the local hashes? " yn
-    echo -e "\033[0m"
+    echo -e "${ENDCOLORIZE}"
   else
     yn=y
   fi
@@ -234,7 +234,7 @@ while true; do
       COUNTER=0
       BIGCOUNTER=0
       hash_it(){
-        hash_check="$(ionice -c2 $CHECKSUM_TYPE_TO_USE $1)"
+        hash_check="$($CHECKSUM_TYPE_TO_USE $1)"
         echo "${hash_check}" >> $LOG_PATH_LOCAL_HASH_LIST
         echo "${hash_check%%[[:space:]]*}" >> $LOG_PATH_LOCAL_HASHES
       }
@@ -242,7 +242,7 @@ while true; do
       for file in $CHECK_COLLECTION_LOCAL_FILES; do
         let COUNTER+=1
         let BIGCOUNTER+=1
-        echo -ne "\t#${BIGCOUNTER} \e[96m${file}\033[0m \033[0K\r"
+        echo -ne "\t#${BIGCOUNTER} \e[96m${file}${ENDCOLORIZE} \033[0K\r"
         if [ $COUNTER -gt $CORE_COUNT ]; then
           wait
           let COUNTER=0
@@ -266,7 +266,7 @@ sort -o $LOG_PATH_LOCAL_HASHES $LOG_PATH_LOCAL_HASHES
 sed -i '/^$/d' $LOG_PATH_LOCAL_HASHES
 sort -u -o $LOG_PATH_LOCAL_HASH_LIST $LOG_PATH_LOCAL_HASH_LIST
 
-echo -e "\n\n\tHashing files from the '\e[96m${COLLECTION_NAMESPACE}\033[0m' collection on \e[96m${DOMAIN}\033[0m\n\n\n"
+echo -e "\n\n\tHashing files from the '\e[96m${COLLECTION_NAMESPACE}${ENDCOLORIZE}' collection on \e[96m${DOMAIN}${ENDCOLORIZE}\n\n\n"
 for i in "${SOLR_PIDS[@]}"; do
   STARTTIME=$(date +%s)
   echo -e "\t${COUNTER} of ${#SOLR_PIDS[@]} PIDS."
@@ -285,7 +285,7 @@ for i in "${SOLR_PIDS[@]}"; do
     $(curl -O -L "${OBJECT_URL}/${i}/datastream/OBJ/download" --silent)
     echo -e "\tDownloaded PAGE PID ${i}"
     echo -e "\tHashing downloaded file."
-    declare regex="$(ionice -c2 $CHECKSUM_TYPE_TO_USE download)"
+    declare regex="$($CHECKSUM_TYPE_TO_USE download)"
     echo -e "\t${CHECKSUM_TYPE} hashing downloaded file complete."
   else
     declare regex=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksum>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
@@ -295,14 +295,14 @@ for i in "${SOLR_PIDS[@]}"; do
   declare local_file_hashes="$LOG_PATH_LOCAL_HASHES"
   echo "${OBJECT_URL}/${i} ${regex_m}" >> $LOG_PATH_DOWNLOADED_HASH_LIST
   echo "$regex_m" >> $LOG_PATH_DOWNLOAD_HASHES
-  echo -e "\tHash processing complete. grep -Fxq $regex_m $local_file_hashes"
+  echo -e "\tHash processing complete."
   if grep -Fxq $regex_m $local_file_hashes
   then
     echo -e "${OBJECT_URL}/${i}/ $(grep -r $regex_m $LOG_PATH_LOCAL_HASH_LIST) $regex_m \n" >> $LOG_PATH_FINAL_REPORT
-    echo -e "\t\e[32m Hash matches original\033[0m\n\t\t${regex_m}"
+    echo -e "\t\e[32m Hash matches original${ENDCOLORIZE}\n\t\t${regex_m}"
   else
-    echo -e "Object file hash has no match\n\t${regex_m}\n\t${OBJECT_URL}/${i}" >> $LOG_PATH_ERRORS
-    echo -e "\t\e[31m Object file hash has no match\033[0m\n\t\t${regex_m}"
+    echo -e "Warning:\t${i}'s hash does not match any local hashes.\n\t${OBJECT_URL}/${i}" >> $LOG_PATH_ERRORS
+    echo -e "\t\e[31m ${i}'s hash does not match any local hashes.${ENDCOLORIZE}\n\t\t${regex_m}"
   fi
   let COUNTER=COUNTER-1
   ENDTIME=$(date +%s)
@@ -317,18 +317,22 @@ for i in "${SOLR_PIDS[@]}"; do
 done
 
 let COUNTER=0
+
+[ -f 'check_collection_logs/last_check_collection_report.log' ] && rm -f check_collection_logs/last_check_collection_report.log
+exec > >(tee -a "check_collection_logs/last_check_collection_report.log" | sed -e "s/\x1b\[.\{1,5\}m//g") 2>&1
+
 echo -e "\n\n"
 center_text " ==== === == =   Report   =  == === ==== "
 echo -e "\n"
 
-ENDCOLORIZE="\033[0m"
+
 if [ ! "$SOLR_COUNT" -eq "$CHECK_COUNTING_FILES_COUNT" ]; then
   COLORIZE="\e[31m"
   echo -e "Numbers ${COLORIZE}don't${ENDCOLORIZE} match: file count to Solr count."
   echo -e "\t${COLORIZE}$(< $LOG_PATH_LOCAL_HASHES wc -l)${ENDCOLORIZE} local files to ${COLORIZE}${SOLR_COUNT}${ENDCOLORIZE} web hosted objects."
 else
   COLORIZE="\e[32m"
-  echo -e "Solr count \e[32mmatches${ENDCOLORIZE} the number of files in the specified directory."
+  echo -e "Solr count ${COLORIZE}matches${ENDCOLORIZE} the number of files in the specified directory."
   echo -e "\tThis doesn't mean that it's correct, this could always be a false positive by itself\n but with the hash checks this could be a good indicator everything is in the Fedora/Islandora.\n"
 fi
 echo -e "\n${COLORIZE}$(< $LOG_PATH_LOCAL_HASHES wc -l)${ENDCOLORIZE} hashes were generated for the ${COLORIZE}${CHECK_COUNTING_FILES_COUNT}${ENDCOLORIZE} local files."
@@ -346,7 +350,7 @@ while IFS= read -r -u13 line; do
 done 13<"$LOG_PATH_MISSING_HASHES"
 
 [[ -f $LOG_PATH_MISSING ]] && echo -e "\n\n${COLORIZE} > > > > > > Item missing from collection or duplicate local copy < < < < < < ${ENDCOLORIZE}\n$(cat $LOG_PATH_MISSING)\n\n\t${COLORIZE}- - - - - - End of missing - - - - - -${ENDCOLORIZE}"
-[[ -f $LOG_PATH_MISSING ]] || echo -e "\t\e[32mAll local hashes have located match online.\033[0m\n\n"
+[[ -f $LOG_PATH_MISSING ]] || echo -e "\n\n\n${COLORIZE}All local hashes have a matching hash online!${ENDCOLORIZE}\n\n"
 
 echo -e "\n\n\nLooking at local file system hashes for duplicates."
 if has_duplicates "${LOG_PATH_LOCAL_HASHES}"; then
@@ -354,9 +358,9 @@ if has_duplicates "${LOG_PATH_LOCAL_HASHES}"; then
     this_hash=$(grep "$fsline" $LOG_PATH_LOCAL_HASH_LIST)
     echo -e "$this_hash\n" >> $LOG_PATH_LOCAL_HASHES_DUPLICATES
   done < <(sort $LOG_PATH_LOCAL_HASHES | uniq -d)
-  echo -e "\n${COLORIZE} > > > > > > Found local file duplicates < < < < < < ${ENDCOLORIZE}\n\nHASH Values \t\t\t\t File Path\n\e[95m$(cat $LOG_PATH_LOCAL_HASHES_DUPLICATES)\033[0m\n\n\t${COLORIZE}- - - - - - End of duplicates - - - - - -${ENDCOLORIZE}\n"
+  echo -e "\n${COLORIZE} > > > > > > Found local file duplicates < < < < < < ${ENDCOLORIZE}\n\nHASH Values \t\t\t\t File Path\n\e[95m$(cat $LOG_PATH_LOCAL_HASHES_DUPLICATES)${ENDCOLORIZE}\n\n\t${COLORIZE}- - - - - - End of duplicates - - - - - -${ENDCOLORIZE}\n"
 else
-  echo -e "\t\e[32m- - - - - - No duplicates found - - - - - -\033[0m\n\n"
+  echo -e "\t${COLORIZE}- - - - - - No duplicates found - - - - - -${ENDCOLORIZE}\n\n"
 fi
 
 echo -e "\n\n\nLooking at hashes from the web hosted images for duplicates."
@@ -365,13 +369,21 @@ if has_duplicates "${LOG_PATH_DOWNLOAD_HASHES}"; then
     this_hash=$(grep "$nline" $LOG_PATH_DOWNLOADED_HASH_LIST)
     echo -e "$this_hash\n" >> $LOG_PATH_DUPLICATES
   done < <(sort $LOG_PATH_DOWNLOAD_HASHES | uniq -d)
-  echo -e "\e[31mDuplicates\033[0m:\n\e[95m$(cat $LOG_PATH_DUPLICATES)\033[0m\n\n\t- - - - - - End of duplicates - - - - - -\n"
+  echo -e "${COLORIZE}Duplicates${ENDCOLORIZE}:\n\e[95m$(cat $LOG_PATH_DUPLICATES)${ENDCOLORIZE}\n\n\t- - - - - - End of duplicates - - - - - -\n"
 else
-  echo -e "\t\e[32m- - - - - - No duplicates found - - - - - -\033[0m\n\n"
+  echo -e "\t${COLORIZE}- - - - - - No duplicates found - - - - - -${ENDCOLORIZE}\n\n"
 fi
 
-[[ -f $LOG_PATH_ERRORS ]] && echo -e "\n\nCollection Errors: \n\t$(cat $LOG_PATH_ERRORS)"
-
+[[ -f $LOG_PATH_ERRORS ]] && echo -e "\n\nCollection Errors/Warnings: \n\n$(cat $LOG_PATH_ERRORS)"
+echo -e "\n\n"
 center_text " ==== === == =   Done   =  == === ==== "
 echo -e "\n\n\n"
 cleanup_files
+
+# Removes ascii formatting from report
+tr -cd '\11\12\15\40-\176' < check_collection_logs/last_check_collection_report.log > check_collection_logs/last_check_collection_report2.log
+sed -e "s/\[3m//g" -i check_collection_logs/last_check_collection_report2.log
+sed -e "s/\[31m//g" -i check_collection_logs/last_check_collection_report2.log
+sed -e "s/\[32m//g" -i check_collection_logs/last_check_collection_report2.log
+sed -e "s/\[0m//g" -i check_collection_logs/last_check_collection_report2.log
+mv check_collection_logs/last_check_collection_report2.log check_collection_logs/last_check_collection_report.log
