@@ -1,0 +1,4 @@
+adminDB: "0012_003049_XXXXXX" # Replace "X" with appropriate adminDB values.
+title: "Title" # Replace with title in title case.
+date_Issued: "Month Day, YYYY" # Replace with date values (e.g. September 21, 2019)
+date_Issued_edtf: "YYYY-MM-DD" # Replace letters with a four-digit year and a two-digit number for month and day (e.g. 2019-09-21)
