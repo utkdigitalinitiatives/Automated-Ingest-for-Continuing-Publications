@@ -5,7 +5,7 @@
 # $3 is the working directory
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd $DIR
+cd $DIR &>/dev/null
 WORKING_HOME_DIR="${3}"
 
 PAGE_DC_FILE=${DIR}/collection_templates/page_example_DC.xml
@@ -56,4 +56,4 @@ rm -f "${WORKING_HOME_DIR}/tmp/${page_folder}_DC.xml"
 # Validate against OAI 2.0
 xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/tmp/oai_dc.xsd" "${1}DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t "$(dirname ${1})"DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
-cd -
+cd - &>/dev/null

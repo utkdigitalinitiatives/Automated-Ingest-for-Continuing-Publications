@@ -18,7 +18,7 @@ WORKING_HOME_DIR="$(dirname $(dirname $(dirname $(dirname $1))))"
 [[ -f ${WORKING_HOME_DIR}/tmp/$(basename ${1%.*})_MODS.xml ]] && rm -f ${WORKING_HOME_DIR}/tmp/$(basename ${1%.*})_MODS.xml
 [[ -f "${1%.*}/MODS.xml" ]] && rm -f "${1%.*}/MODS.xml"
 
-cd $DIR
+cd $DIR &>/dev/null
 
 # Pulls the yaml values for the book issue in as variables.
 [ -d $1 ] || echo -e "MODS \n\t${1} folder does not exist and cannot create MODS file." >> "${WORKING_HOME_DIR}/3_errors/$(basename ${2}).txt"
@@ -44,4 +44,4 @@ xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/tmp/mods-3-5.xsd" "${1%
 
 rm -f "${WORKING_HOME_DIR}/tmp/$(basename ${1%.*})_MODS.xml"
 
-cd -
+cd - &>/dev/null

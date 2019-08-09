@@ -92,9 +92,9 @@ if [[ $size_needed -gt $size_available ]]; then
 fi
 
 # Download xsd schema
-[ -f ${MAIN_TMP}/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
-[ -f ${MAIN_TMP}/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${MAIN_TMP}/mods-3-5.xsd"
-[ -f ${MAIN_TMP}/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
+[ -f ${MAIN_TMP}/oai_dc.xsd ] || nice -n 17 curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
+[ -f ${MAIN_TMP}/mods-3-5.xsd ] || nice -n 17 curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${MAIN_TMP}/mods-3-5.xsd"
+[ -f ${MAIN_TMP}/simpledc20021212.xsd ] || nice -n 17 curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
 
 # Replace url with string to downloaded version.
 sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
@@ -382,7 +382,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       # Check that the PID exist
       # --------------------------------------------------------------------------
 
-      status_code=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${basename_of_collection/__/%3A}")
+      status_code=$(nice -n 17 curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${basename_of_collection/__/%3A}")
       if [[ "$status_code" -eq 200 ]] ; then
         # ------------------------------------------------------------------------
         # Book processing
@@ -478,10 +478,10 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
                 for i in "${BATCH_PIDS[@]}"
                 do
-                  PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
+                  PAGE_STATUS=$(nice -n 17 curl --write-out %{http_code} --silent --output /dev/null "${BASE_URL}/${i}/datastream/OBJ/view")
                   [ ! $PAGE_STATUS == 200 ] && echo "PAGE PID ${i} came back with a status code of ${PAGE_STATUS}" >> ${three_errors}/$(basename ${collection}).txt
                   # Hash each PID's object to check if it was found.
-                    $(curl -L "${BASE_URL}/${i}/datastream/OBJ/download" --output ${MAIN_TMP}/test{i})
+                    $(nice -n 17 curl -L "${BASE_URL}/${i}/datastream/OBJ/download" --output ${MAIN_TMP}/test{i})
 
                     declare file="${MAIN_TMP}/hashes.txt"
                     declare regex="$(ionice -c2 sha256sum ${MAIN_TMP}/test{i})"
@@ -491,7 +491,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                         then
                             echo -e "Hash matches original\n\t${regex_m}\n\n"
                         else
-                            echo -e "Page hash has no match\n\t${BASE_URL}/${i}" >> ${three_errors}/$(basename ${collection}).txt
+                            echo -e "Page hash has no match or is duplicated.\n\t${BASE_URL}/${i}" >> ${three_errors}/$(basename ${collection}).txt
                     fi
                     rm -f ${MAIN_TMP}/test{i}
                 done
