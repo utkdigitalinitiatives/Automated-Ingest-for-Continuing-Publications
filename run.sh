@@ -28,6 +28,7 @@ BASE_URL="${BASE_URL%/}"
 BASE_URI="${BASE_URI%/}"
 DRUPAL_HOME_DIR="${DRUPAL_HOME_DIR%/}"
 WORKING_HOME_DIR="${WORKING_HOME_DIR%/}"
+EMAIL=$(config_get EMAIL)
 
 forced=''
 if [[ $(uname) == "Linux" ]]; then
@@ -466,7 +467,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 QU2="SELECT COUNT(*) FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
                 [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "$QU1" | grep "[:]")
                 [[ $sid_value ]] && COUNT_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --extra=--skip-column-names --db-prefix "$QU2")
-
+                mail -s "${BATCH_PIDS} Book was ingested" $EMAIL  <<< "Ingested on ${BASE_URL}, PID: ${BATCH_PIDS}, From: ${WORKING_HOME_DIR}/${D}"
                 image_count=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2" | wc -l)
                 if [[ $image_count -eq $COUNT_PIDS ]]; then
                   echo "PID count matches image count"
