@@ -1,4 +1,4 @@
 year: "YYYY" # Replace "X" a four-digit year
 season: "season" # Replace season with 'spring', 'summer', 'fall', or 'winter' (note lowercase) as appropriate
-date_Issued_edtf: "YYYY-SS" # Replace letters with a four-digit year and a two-digit number for season
+dateIssued_edtf: "YYYY-SS" # Replace letters with a four-digit year and a two-digit number for season
 # spring = '21', summer= '22', fall= '23', winter= '24'
