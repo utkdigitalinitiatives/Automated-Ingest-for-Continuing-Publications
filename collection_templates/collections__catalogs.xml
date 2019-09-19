@@ -4,11 +4,11 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
-    <identifier type="filename">g1980</identifier>
+    <identifier type="filename">${student_type}${dateIssued_edtf}</identifier>
     <titleInfo>
-        <title>Graduate catalog, 1980-1981</title>
+        <title>${catalog_type}, ${date_academic}</title>
     </titleInfo>
-    <abstract>Graduate catalog for the University of Tennessee, Knoxville; includes course descriptions, university requirements, degree requirements, and academic policies.</abstract>
+    <abstract>${catalog_type} for the University of Tennessee, Knoxville; includes course descriptions, university requirements, degree requirements, and academic policies.</abstract>
     <name authority="naf"
         valueURI="http://id.loc.gov/authorities/names/n80003889">
         <namePart>University of Tennessee, Knoxville</namePart>
@@ -18,8 +18,8 @@
         </role>
     </name>
     <originInfo>
-        <dateOther>1980-1981</dateOther>
-        <dateIssued keyDate="yes" encoding="edtf">1980</dateIssued>
+        <dateOther>${date_academic}</dateOther>
+        <dateIssued keyDate="yes" encoding="edtf">${dateIssued_edtf}</dateIssued>
     </originInfo>
     <physicalDescription>
         <form authority="aat" valueURI="http://vocab.getty.edu/aat/300026614">online catalogs</form>
@@ -30,10 +30,6 @@
     <subject authority="lcsh"
         valueURI="http://id.loc.gov/authorities/subjects/sh2002012107">
         <topic>Universities and colleges--Curricula--Catalogs</topic>
-    </subject>
-    <subject authority="lcsh"
-        valueURI="http://id.loc.gov/authorities/subjects/sh85056177">
-        <topic>Graduate students</topic>
     </subject>
     <subject authority="lcsh"
         valueURI="http://id.loc.gov/authorities/subjects/sh85041065">
