@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
+    <identifier type="filename">phonenix_${year}${season}</identifier>
+    <identifier type="issn">2641-4562</identifier>
+    <titleInfo supplied="yes">
+        <title>Phoenix, ${season} ${year}</title>
+    </titleInfo>
+    <abstract>
+        Phoenix is a student-led literary publication, showcasing the creative output of UT's diverse student population, including photography, illustration, poetry, fiction, non-fiction, and interviews.
+    </abstract>
+    <name authority="naf" type="corporate" valueURI="http://id.loc.gov/authorities/names/n80003889">
+        <namePart>University of Tennessee, Knoxville</namePart>
+        <role>
+            <roleTerm authority="marcrelator" valueURI="http://id.loc.gov/vocabulary/relators/cre">Creator</roleTerm>
+        </role>
+    </name>
+    <physicalDescription>
+        <form authority="aat" valueURI="http://vocab.getty.edu/aat/300026657">periodicals</form>
+    </physicalDescription>
+    <originInfo>
+        <dateIssued>${year}</dateIssued>
+        <dateIssued encoding="edtf">${dateIssued_edtf}</dateIssued>
+        <place>
+            <placeTerm valueURI="http://id.loc.gov/authorities/names/n79109786">Knoxville (Tenn.)</placeTerm>
+        </place>
+    </originInfo>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh85028351">
+        <topic>College student newspapers and periodicals</topic>
+    </subject>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh88002030">
+        <topic>College students' writings</topic>
+    </subject>
+    <typeOfResource>text</typeOfResource>
+    <typeOfResource>still image</typeOfResource>
+    <relatedItem displayLabel="Project" type="host">
+        <titleInfo>
+            <title>Phoenix</title>
+        </titleInfo>
+    </relatedItem>
+    <location>
+        <physicalLocation valueURI="http://id.loc.gov/authorities/names/no2014027633">
+            University of Tennessee, Knoxville. Special Collections
+        </physicalLocation>
+    </location>
+    <classification authority="lcc">LH1.T2 P3</classification>
+    <language>
+        <languageTerm authority="iso639-2b" type="text">English</languageTerm>
+    </language>
+    <recordInfo>
+        <recordContentSource valueURI="http://id.loc.gov/authorities/names/n87808088">University of Tennessee, Knoxville. Libraries</recordContentSource>
+        <languageOfCataloging>
+            <languageTerm authority="iso639-2b" type="text">English</languageTerm>
+        </languageOfCataloging>
+        <recordOrigin>
+            Created and edited in general conformance to MODS Guidelines (Version 3.5).
+        </recordOrigin>
+    </recordInfo>
+    <accessCondition type="use and reproduction" xlink:href="http://rightsstatements.org/vocab/InC/1.0/">In Copyright</accessCondition>
+</mods>

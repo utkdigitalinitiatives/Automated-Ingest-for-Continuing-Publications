@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
+    <identifier type="filename">comm_${year}${season}</identifier>
+    <titleInfo supplied="yes">
+        <title>
+            Commencement of the University of Tennessee, Knoxville, ${year} ${season}
+        </title>
+    </titleInfo>
+    <abstract>
+        Commencement program from ${year}. The University of Tennessee Commencement, with over two centuries of traditions behind it, is the formal ceremony that publicly recognizes graduate candidates and confers degrees upon them. The commencement programs featured in this collection range from 1841 to the present.
+    </abstract>
+    <originInfo>
+        <dateCreated>${year}</dateCreated>
+        <dateCreated encoding="edtf" keyDate="yes">${dateCreated_edtf}</dateCreated>
+        <publisher>University of Tennessee, Knoxville</publisher>
+    </originInfo>
+    <physicalDescription>
+        <form authority="aat" valueURI="http://vocab.getty.edu/aat/300264821">printed ephemera</form>
+    </physicalDescription>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh00009998">
+        <topic>Commencement ceremonies</topic>
+    </subject>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh2009002271">
+        <topic>
+            Universities and colleges--Alumni and alumnae--United States
+        </topic>
+    </subject>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh00002542">
+        <topic>Rites and ceremonies</topic>
+    </subject>
+    <subject>
+        <topic>University of Tennessee, Knoxville--History</topic>
+    </subject>
+    <language>
+        <languageTerm authority="iso639-2b" type="text">English</languageTerm>
+    </language>
+    <typeOfResource>text</typeOfResource>
+    <classification authority="lcc">LD5297 .U55 ${year}</classification>
+    <relatedItem displayLabel="Project" type="host">
+        <titleInfo>
+            <title>University of Tennessee Commencement Programs</title>
+        </titleInfo>
+    </relatedItem>
+    <location>
+        <physicalLocation valueURI="http://id.loc.gov/authorities/names/no2014027633">
+            University of Tennessee, Knoxville. Special Collections
+        </physicalLocation>
+    </location>
+    <recordInfo>
+        <recordContentSource valueURI="http://id.loc.gov/authorities/names/n87808088">University of Tennessee, Knoxville. Libraries</recordContentSource>
+        <recordOrigin>
+            Created and edited in general conformance to MODS Guidelines (Version 3.5).
+        </recordOrigin>
+    </recordInfo>
+    <accessCondition type="use and reproduction" xlink:href="http://rightsstatements.org/vocab/InC-NC/1.0/">In Copyright - Non-commercial Use Permitted</accessCondition>
+</mods>
