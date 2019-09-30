@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
+    <identifier type="issn">1521-6411</identifier>
+    <identifier type="filename">alum_${year}${season}</identifier>
+    <titleInfo supplied="yes">
+        <title>
+            The Tennessee Alumnus, volume ${volume}, issue ${issue}, ${year} ${season}
+        </title>
+    </titleInfo>
+    <abstract>
+        Magazine distributed three times a year to University of Tennessee graduates from all campuses and donors covering recent innovations, personal stories, and news.
+    </abstract>
+    <originInfo>
+        <dateIssued>${year}</dateIssued>
+        <dateIssued encoding="edtf" keyDate="yes">${dateIssued_edtf}</dateIssued>
+        <publisher>
+            University of Tennessee (System). Alumni Association
+        </publisher>
+        <place>
+            <placeTerm valueURI="http://id.loc.gov/authorities/names/n79109786">Knoxville (Tenn.)</placeTerm>
+        </place>
+        <issuance>serial</issuance>
+    </originInfo>
+    <physicalDescription>
+        <form authority="aat" valueURI="http://vocab.getty.edu/aat/300026657">periodicals</form>
+    </physicalDescription>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh2009002271">
+        <topic>
+            Universities and colleges--Alumni and alumnae--United States
+        </topic>
+    </subject>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh85108794">
+        <topic>Universities and colleges--Public relations</topic>
+    </subject>
+    <subject authority="lcsh" valueURI="http://id.loc.gov/authorities/subjects/sh85028332">
+        <topic>College publications</topic>
+    </subject>
+    <subject authority="naf" valueURI="http://id.loc.gov/authorities/names/n79060965">
+        <name>
+            <namePart>University of Tennessee (System)</namePart>
+        </name>
+    </subject>
+    <subject>
+        <geographic authority="naf" valueURI="http://id.loc.gov/authorities/names/n79109786">Tennessee</geographic>
+        <cartographics>
+            <coordinates>35.75035N, 86.25027W</coordinates>
+        </cartographics>
+    </subject>
+    <language>
+        <languageTerm authority="iso639-2b" type="text">English</languageTerm>
+    </language>
+    <typeOfResource>text</typeOfResource>
+    <classification authority="lcc">LH1.T2 T34</classification>
+    <relatedItem displayLabel="Project" type="host">
+        <titleInfo>
+            <title>Tennessee Alumnus</title>
+        </titleInfo>
+    </relatedItem>
+    <location>
+        <physicalLocation valueURI="http://id.loc.gov/authorities/names/no2014027633">
+            University of Tennessee, Knoxville. Special Collections
+        </physicalLocation>
+    </location>
+    <recordInfo>
+        <recordContentSource valueURI="http://id.loc.gov/authorities/names/n87808088">University of Tennessee, Knoxville. Libraries</recordContentSource>
+        <recordOrigin>
+            Created and edited in general conformance to MODS Guidelines (Version 3.5).
+        </recordOrigin>
+    </recordInfo>
+    <accessCondition type="use and reproduction" xlink:href="http://rightsstatements.org/vocab/InC-EDU/1.0/">In Copyright - Educational Use Permitted</accessCondition>
+</mods>
