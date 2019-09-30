@@ -12,7 +12,7 @@
     </abstract>
     <originInfo>
         <dateIssued>${year}</dateIssued>
-        <dateIssued encoding="edtf" keyDate="yes">${dateIssued_edtf}</dateIssued>
+        <dateIssued encoding="edtf" keyDate="yes">${date_issued_edtf}</dateIssued>
         <publisher>
             University of Tennessee (System). Alumni Association
         </publisher>

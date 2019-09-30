@@ -19,7 +19,7 @@
     </name>
     <originInfo>
         <dateOther>${date_academic}</dateOther>
-        <dateIssued keyDate="yes" encoding="edtf">${dateIssued_edtf}</dateIssued>
+        <dateIssued keyDate="yes" encoding="edtf">${date_issued_edtf}</dateIssued>
     </originInfo>
     <physicalDescription>
         <form authority="aat" valueURI="http://vocab.getty.edu/aat/300026614">online catalogs</form>

@@ -11,7 +11,7 @@
     </abstract>
     <originInfo>
         <dateCreated>${year}</dateCreated>
-        <dateCreated encoding="edtf" keyDate="yes">${dateCreated_edtf}</dateCreated>
+        <dateCreated encoding="edtf" keyDate="yes">${date_created_edtf}</dateCreated>
         <publisher>University of Tennessee, Knoxville</publisher>
     </originInfo>
     <physicalDescription>
