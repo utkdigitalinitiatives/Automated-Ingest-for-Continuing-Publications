@@ -1,5 +1,5 @@
 volume: "XX" # Replace XX with the volume number
 number: "X" # Replace X with the number or issue number
-date_Issued: "Season YYYY" # Replace with the season fully written out and the four-digit year, e.g. Spring 2019
-date_Issued_edtf: "YYYY-MM" # Replace letters with a four-digit year and a two-digit number for season 
+date_issued: "Season YYYY" # Replace with the season fully written out and the four-digit year, e.g. Spring 2019
+date_issued_edtf: "YYYY-MM" # Replace letters with a four-digit year and a two-digit number for season 
 #(spring = 21, summer = 22, fall = 23, winter = 24), e.g. 2019-21 for Spring 2019

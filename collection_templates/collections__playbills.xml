@@ -5,8 +5,8 @@
         <title>${title}</title>
     </titleInfo>
     <originInfo>
-        <dateIssued>${date_Issued}</dateIssued>
-        <dateIssued encoding="edtf">${date_Issued_edtf}</dateIssued>
+        <dateIssued>${date_issued}</dateIssued>
+        <dateIssued encoding="edtf">${date_issued_edtf}</dateIssued>
         <place>
             <placeTerm valueURI="http://id.loc.gov/authorities/names/n80003889">University of Tennessee, Knoxville</placeTerm>
         </place>

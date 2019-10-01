@@ -19,7 +19,7 @@
     </physicalDescription>
     <originInfo>
         <dateIssued>${year}</dateIssued>
-        <dateIssued encoding="edtf">${dateIssued_edtf}</dateIssued>
+        <dateIssued encoding="edtf">${date_issued_edtf}</dateIssued>
         <place>
             <placeTerm valueURI="http://id.loc.gov/authorities/names/n79109786">Knoxville (Tenn.)</placeTerm>
         </place>

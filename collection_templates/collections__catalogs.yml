@@ -1,5 +1,5 @@
 date_academic: "YYYY-YYYY" # Replace Xs with two four-digit years showing the years spanned by the catalog
 student_type: "x" # Replace "x" with "g" for graduate or "u" for undergraduate (lowercase)
 catalog_type: "X catalog" # Replace "X" with "Graduate" or "Undergraduate"
-dateIssued_edtf: "YYYY" # Replace Xs with the first year date associated with the publication
+date_issued_edtf: "YYYY" # Replace Xs with the first year date associated with the publication
 # e.g. if date_academic is 2017-2018, dateIssued_edtf is 2017
