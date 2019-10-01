@@ -4,7 +4,7 @@
     <identifier type="filename">alum_${year}${season}</identifier>
     <titleInfo supplied="yes">
         <title>
-            The Tennessee Alumnus, volume ${volume}, issue ${issue}, ${year} ${season}
+            The Tennessee Alumnus, ${year} ${season}
         </title>
     </titleInfo>
     <abstract>
