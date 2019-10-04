@@ -97,7 +97,7 @@ fi
 [ -f ${MAIN_TMP}/simpledc20021212.xsd ] || nice -n 17 curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
 
 # Replace url with string to downloaded version.
-sed 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
+sed -i 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
 
 cd $WORKING_HOME_DIR &>/dev/null
 
