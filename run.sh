@@ -68,7 +68,8 @@ WORKING_TMP_DIR=""
 
 # In case process is terminated.
 function cleanup_files {
-  [ -f '${MAIN_TMP}/oai_dc.xsd' ] && rm -f ${MAIN_TMP}/oai_dc.xsd
+  [ -f '${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd' ] && rm -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd
+  [ -f '${WORKING_HOME_DIR}/automated_ingesting/tmp' ] && rm -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd
   [ -f '${MAIN_TMP}/mods-3-5.xsd' ] && rm -f ${MAIN_TMP}/mods-3-5.xsd
   [ -f '${MAIN_TMP}/simpledc20021212.xsd' ] && rm -f ${MAIN_TMP}/simpledc20021212.xsd
   [ -f '${MAIN_TMP}/*_MODS.xml' ] && rm -rf ${MAIN_TMP}/*_MODS.xml
@@ -91,13 +92,19 @@ if [[ $size_needed -gt $size_available ]]; then
   exit
 fi
 
+mkdir -p ${MAIN_TMP}
+mkdir -p ${WORKING_HOME_DIR}/automated_ingesting/tmp
+
 # Download xsd schema
-[ -f ${MAIN_TMP}/oai_dc.xsd ] || nice -n 17 curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
-[ -f ${MAIN_TMP}/mods-3-5.xsd ] || nice -n 17 curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${MAIN_TMP}/mods-3-5.xsd"
-[ -f ${MAIN_TMP}/simpledc20021212.xsd ] || nice -n 17 curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
+# Created a modified version.
+#[ -d ${MAIN_TMP}/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
+[ -f ${MAIN_TMP}/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${MAIN_TMP}/mods-3-5.xsd"
+[ -f ${MAIN_TMP}/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
+[ -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd ] || rsync -avz ${CURRENT_DIR}/oai_dc_modified.xsd ${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd
+[ -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd ] || rsync -avz ${CURRENT_DIR}/dc.xsd ${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd
 
 # Replace url with string to downloaded version.
-sed -i 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
+#sed -i 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
 
 cd $WORKING_HOME_DIR &>/dev/null
 

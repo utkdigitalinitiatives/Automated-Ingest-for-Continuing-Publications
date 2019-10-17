@@ -54,6 +54,6 @@ fi
 rm -f "${WORKING_HOME_DIR}/tmp/${page_folder}_DC.xml"
 
 # Validate against OAI 2.0
-xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd" "${1}DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t "$(dirname ${1})"DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
+xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd" --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd" "${1}DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t "$(dirname ${1})"DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
 cd - &>/dev/null
