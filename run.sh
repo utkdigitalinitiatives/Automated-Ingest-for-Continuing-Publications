@@ -13,11 +13,12 @@ config_read_file() {
 config_get() {
     val="$(config_read_file ${CURRENT_DIR}/config.cfg "${1}")";
     if [ "${val}" = "__UNDEFINED__" ]; then
-        val="$(config_read_file config.cfg.defaults "${1}")";
+      val="$(config_read_file config.cfg.defaults "${1}")";
     fi
     printf -- "%s" "${val}";
 }
 
+# CONFIG Import
 TEST_RUN=$(config_get TEST_RUN)
 USERNAME=$(config_get username)
 BASE_URL=$(config_get BASE_URL)
@@ -29,6 +30,7 @@ BASE_URI="${BASE_URI%/}"
 DRUPAL_HOME_DIR="${DRUPAL_HOME_DIR%/}"
 WORKING_HOME_DIR="${WORKING_HOME_DIR%/}"
 EMAIL=$(config_get EMAIL)
+DEBUG_PROCESS=$(config_get DEBUG_PROCESS)
 
 forced=''
 if [[ $(uname) == "Linux" ]]; then
@@ -83,6 +85,13 @@ trap cleanup_files EXIT
 if [ ! -d "${DRUPAL_HOME_DIR}" ]; then
    echo "No drupal"
    exit
+fi
+
+# One log to rule them all
+if [[ "$DEBUG_PROCESS" == true ]]; then
+  exec 3>&1 4>&2
+  trap 'exec 2>&4 1>&3' 0 1 2 3
+  exec 1>$(date +%N)_gollums_memory_log.out 2>&1
 fi
 
 size_needed=$(du -s "${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing" | cut -f 1 -d "/")
@@ -429,7 +438,9 @@ if (( $system_ready == '0' || $system_ready == '1')); then
             # --------------------------------------------------------------------
             if [[ ! $TEST_RUN == true ]]; then
 
+              [[ -f ${MAIN_TMP}/automated_ingestion.log ]] || touch ${MAIN_TMP}/automated_ingestion.log
               echo "" >> ${MAIN_TMP}/automated_ingestion.log
+
               book_parent="${basename_of_collection//__/:}"
 
               for D in ${collection}book/*/; do
@@ -472,6 +483,8 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 # Locating parent PID.
                 QU1="SELECT id FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
                 QU2="SELECT COUNT(*) FROM islandora_batch_queue WHERE sid=${sid_value} AND parent IS NOT NULL"
+                BATCH_PIDS=0
+                COUNT_PIDS=0
                 [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "$QU1" | grep "[:]")
                 [[ $sid_value ]] && COUNT_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --extra=--skip-column-names --db-prefix "$QU2")
                 mail -s "${BATCH_PIDS} Book was ingested" $EMAIL  <<< "Ingested on ${BASE_URL}, PID: ${BATCH_PIDS}, From: ${WORKING_HOME_DIR}/${D}"
