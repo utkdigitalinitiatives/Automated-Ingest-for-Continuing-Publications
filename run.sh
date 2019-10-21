@@ -193,7 +193,7 @@ PLUSX=0
 # ------------------------------------------------------------------------------
 
 # Check if there's anything to process.
-if [[ $(find automated_ingesting/2_ready_for_processing -type d -empty) ]]; then
+if [[ $(find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -type d -empty) ]]; then
   echo -e "\n\n\n\nDirectory Empty\n\tnothing to process.\n\n\n\n"
   exit
 elif [ -f automated_ingesting/2_ready_for_processing/*.* ]; then
@@ -389,7 +389,11 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       echo -e "\tError log is not empty and directory requires attention.\n\n"
 
       # move collection to error folder.
-      [[ $TEST_RUN == true ]] || mv "${collection}" "${three_errors}/"
+      if [[ -d "${three_errors}/${collection}" ]]; then
+        [[ $TEST_RUN == true ]] || mv "${collection}" "${three_errors}/${collection}_NAME_CONFLICT_$(date +%N)"
+      else
+        [[ $TEST_RUN == true ]] || mv "${collection}" "${three_errors}/"
+      fi
       exit
 
     else
@@ -492,7 +496,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 if [[ $image_count -eq $COUNT_PIDS ]]; then
                   echo "PID count matches image count"
                 else
-                  echo -e "There are ${#images} images in $D and $COUNT_PIDS batch processed PIDS for pages." >> ${three_errors}/$(basename ${collection}).txt
+                  echo -e "There are ${#images} images in $D and $COUNT_PIDS batch processed PIDS for pages in que #${QU2}." >> ${three_errors}/$(basename ${collection}).txt
                 fi
                 unset images
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
