@@ -267,20 +267,23 @@ sed -i '/^$/d' $LOG_PATH_LOCAL_HASHES
 sort -u -o $LOG_PATH_LOCAL_HASH_LIST $LOG_PATH_LOCAL_HASH_LIST
 
 echo -e "\n\n\tHashing files from the '\e[96m${COLLECTION_NAMESPACE}${ENDCOLORIZE}' collection on \e[96m${DOMAIN}${ENDCOLORIZE}\n\n\n"
+CHECKED=0
 for i in "${SOLR_PIDS[@]}"; do
   STARTTIME=$(date +%s)
   echo -e "\t${COUNTER} of ${#SOLR_PIDS[@]} PIDS."
   [[ -f download ]] && rm -f download
-  PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}")
+  if [ $CHECKED == 0 ]; then
+    let CHECKED=CHECKED-1
+  PAGE_STATUS=$(curl -L --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i} | head -n 1 | cut -d$' ' -f2")
   [ ! $PAGE_STATUS == 200 ] && echo "PID ${i} came back with a status code of ${PAGE_STATUS}"
-  FEDORA_PAGE_STATUS=$(curl -u ${FEDORAUSERNAME}:${FEDORAPASS} --write-out %{http_code} --silent --output /dev/null "${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml")
+  FEDORA_PAGE_STATUS=$(curl -L -u ${FEDORAUSERNAME}:${FEDORAPASS} --write-out %{http_code} --silent --output /dev/null "${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml" | head -n 1 | cut -d$' ' -f2)
   if [ ! $FEDORA_PAGE_STATUS == 200 ]; then
     echo -e "\n\n Check Fedora Username | Password\n\n\n"
     exit
   fi
+  fi
   CHECKSUM_TYPE=$(curl --silent -u ${FEDORAUSERNAME}:${FEDORAPASS} ${SOLR_DOMAIN_AND_PORT}/fedora/objects/${i}/datastreams/OBJ?format=xml | grep "<dsChecksumType>" | sed -e 's/<[^>]*>//g' | tr -d '\r\n')
   if [[ ! $CHECKSUM_TYPE == $CHECKSUM_TYPE_FIRST ]]; then
-    PAGE_STATUS=$(curl --write-out %{http_code} --silent --output /dev/null "${OBJECT_URL}/${i}/datastream/OBJ/download")
     echo -e "\tDownloading Object for PID ${i} via ${OBJECT_URL}/${i}/datastream/OBJ/download"
     $(curl -O -L "${OBJECT_URL}/${i}/datastream/OBJ/download" --silent)
     echo -e "\tDownloaded PAGE PID ${i}"
@@ -387,3 +390,4 @@ sed -e "s/\[31m//g" -i check_collection_logs/last_check_collection_report2.log
 sed -e "s/\[32m//g" -i check_collection_logs/last_check_collection_report2.log
 sed -e "s/\[0m//g" -i check_collection_logs/last_check_collection_report2.log
 mv check_collection_logs/last_check_collection_report2.log check_collection_logs/last_check_collection_report.log
+echo -e "Report can be found at ${COLORIZE}${DIR}/check_collection_logs/last_check_collection_report.log${ENDCOLORIZE}"
