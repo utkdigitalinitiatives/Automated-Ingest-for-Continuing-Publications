@@ -1,4 +1,6 @@
 #!/bin/bash
+# Being safe
+set -e
 
 # W3 times out during validation
 seconds_to_slowdown_validation=.5
@@ -106,11 +108,13 @@ mkdir -p ${WORKING_HOME_DIR}/automated_ingesting/tmp
 
 # Download xsd schema
 # Created a modified version.
-#[ -d ${MAIN_TMP}/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
+# [ -d ${MAIN_TMP}/oai_dc.xsd ] || curl -L "http://www.openarchives.org/OAI/2.0/oai_dc.xsd" --output "${MAIN_TMP}/oai_dc.xsd"
+# [ -d ${WORKING_HOME_DIR}/xml.xsd ] || curl -L "http://www.w3.org/2001/03/xml.xsd" --output "${WORKING_HOME_DIR}/xml.xsd"
 [ -f ${MAIN_TMP}/mods-3-5.xsd ] || curl -L "http://www.loc.gov/standards/mods/v3/mods-3-5.xsd" --output "${MAIN_TMP}/mods-3-5.xsd"
 [ -f ${MAIN_TMP}/simpledc20021212.xsd ] || curl -L "http://dublincore.org/schemas/xmls/simpledc20021212.xsd" --output "${MAIN_TMP}/simpledc20021212.xsd"
 [ -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd ] || rsync -avz ${CURRENT_DIR}/oai_dc_modified.xsd ${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd
 [ -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd ] || rsync -avz ${CURRENT_DIR}/dc.xsd ${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd
+[ -f ${WORKING_HOME_DIR}/automated_ingesting/tmp/xml.xsd ] || rsync -avz ${CURRENT_DIR}/xml.xsd ${WORKING_HOME_DIR}/automated_ingesting/tmp/xml.xsd
 
 # Replace url with string to downloaded version.
 #sed -i 's#http://dublincore.org/schemas/xmls/simpledc20021212.xsd#${MAIN_TMP}/simpledc20021212.xsd#g' ${MAIN_TMP}/oai_dc.xsd
@@ -491,14 +495,17 @@ if (( $system_ready == '0' || $system_ready == '1')); then
                 COUNT_PIDS=0
                 [[ $sid_value ]] && BATCH_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --db-prefix "$QU1" | grep "[:]")
                 [[ $sid_value ]] && COUNT_PIDS=$($DRUSH -v --root=$DRUPAL_HOME_DIR sql-query --extra=--skip-column-names --db-prefix "$QU2")
-                mail -s "${BATCH_PIDS} Book was ingested" $EMAIL  <<< "Ingested on ${BASE_URL}, PID: ${BATCH_PIDS}, From: ${WORKING_HOME_DIR}/${D}"
-                image_count=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2" | wc -l)
-                if [[ $image_count -eq $COUNT_PIDS ]]; then
-                  echo "PID count matches image count"
+                mail -s "${BATCH_PIDS} Book was ingested" $EMAIL <<< "Ingested on ${BASE_URL}, PID: ${BATCH_PIDS}, From: ${WORKING_HOME_DIR}/${D}"
+                IMAGE_COUNT=$(find ${WORKING_HOME_DIR}/${D} -type f -name "*.tif" -o -name "*.jp2" | wc -l)
+
+                # 'Less than' <= is set in case of preexisting objects within the collection from previous ingests.
+                if [[ $IMAGE_COUNT -le $COUNT_PIDS ]]; then
+                  echo "PID count matches expected image count. ${IMAGE_COUNT} <= ${COUNT_PIDS}"
                 else
                   echo -e "There are ${#images} images in $D and $COUNT_PIDS batch processed PIDS for pages in que #${QU2}." >> ${three_errors}/$(basename ${collection}).txt
                 fi
                 unset images
+
                 BATCH_PIDS=(${BATCH_PIDS//\\n/ })
                 for i in "${BATCH_PIDS[@]}"
                 do
