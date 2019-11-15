@@ -42,7 +42,7 @@ echo $compiled > "${WORKING_HOME_DIR}/tmp/${page_folder}_DC.xml"
 xmllint -format -recover "${WORKING_HOME_DIR}/tmp/${page_folder}_DC.xml" > "${1%/}/DC.xml"
 [ -f "${1%/}/DC.xml" ] || echo -e "DC:\n\t ${PAGE_DC_FILE} failed to move ${1%/}/DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
-TITLE_LINE_OF_DC=$(xmllint --xpath "/*[local-name()='dc']/*[local-name()='title']" "${1}DC.xml" | sed ':again;$!N;$!b again; s/{[^}]*}//g' | tr -d '[:space:]')
+TITLE_LINE_OF_DC=$(xmllint --xpath "/*[local-name()='dc']/*[local-name()='title']" "${1%/}/DC.xml" | sed ':again;$!N;$!b again; s/{[^}]*}//g' | tr -d '[:space:]')
 TITLE_LINE_OF_DC=${TITLE_LINE_OF_DC//[[:digit:]]/}
 [ "${TITLE_LINE_OF_DC}" == "" ] && echo -e "DC:\n\t ${PAGE_DC_FILE} failed to read title of DC file." >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
@@ -54,6 +54,6 @@ fi
 rm -f "${WORKING_HOME_DIR}/tmp/${page_folder}_DC.xml"
 
 # Validate against OAI 2.0
-xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd" --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd" "${1}DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t "$(dirname ${1})"DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
+xmllint --noout --xinclude --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/dc.xsd" --schema "${WORKING_HOME_DIR}/automated_ingesting/tmp/oai_dc.xsd" "${1%/}/DC.xml" 2>&1 >/dev/null || echo -e "Issue with DC validation with \n\t "$(dirname ${1})"DC.xml" >> "${3}/automated_ingesting/3_errors/$(basename ${2}).txt"
 
 cd - &>/dev/null

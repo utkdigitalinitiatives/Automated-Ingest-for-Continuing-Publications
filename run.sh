@@ -211,12 +211,14 @@ if [[ ! -d ${CURRENT_DIR}/collection_templates ]]; then
 fi
 
 # Cleanup incase of an OSX or Windows mounts create hidden files.
-find . -type f -name '*.DS_Store' -ls -delete
-find . -type f -name '*._*' -ls -delete
-find . -type f -name 'Thumbs.db' -ls -delete
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -type f -name '*.DS_Store' -ls -delete
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -type f -name '*._*' -ls -delete
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -type f -name 'Thumbs.db' -ls -delete
 
 # Rename tiff to tif
-find . -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -name "*.tiff" -exec bash -c 'mv "$1" "${1%.tiff}".tif' - '{}' \;
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -name "* *" -print0 | sort -rz | while read -d $'\0' f; do mv -v "$f" "$(dirname "$f")/$(basename "${f// /_}")"; done
+find ${WORKING_HOME_DIR}/automated_ingesting/2_ready_for_processing -name "*'*" -print0 | sort -rz | while read -d $'\0' f; do mv -v "$f" "$(dirname "$f")/$(basename "${f//\'/_}")"; done
 # END of correct common mistakes.
 
 # code snippet from
@@ -311,22 +313,22 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       # Create the DC files for each page directory.
       COUNTER=0
       for PAGE_FOLDER in $FOLDER/*/*/*/; do
-
+        echo -ne "$COUNTER | Processing ${PAGE_FOLDER} \033[0K\r"
         count_obj_in_folder=(`find $PAGE_FOLDER -maxdepth 1 -name "*.tif"`)
         count_obj_in_folder+=(`find $PAGE_FOLDER -maxdepth 1 -name "*.jp2"`)
         if [ ${#count_obj_in_folder[@]} -gt 1 ]; then
           echo "There are ${#count_obj_in_folder[@]} number of images in the ${PAGE_FOLDER} folder. Please remove one."  >> ${three_errors}/$(basename ${FOLDER}).txt
         else
-          if [ ! -f "${PAGE_FOLDER}/OBJ.tif" ] && [ $(find $PAGE_FOLDER -maxdepth 1 -name "*.tif" | wc -l) -gt 0 ]; then
-            mv $PAGE_FOLDER/*.tif $PAGE_FOLDER/OBJ.tif
+          if [ ! -f "${PAGE_FOLDER%/}/OBJ.tif" ] && [ $(find $PAGE_FOLDER -maxdepth 1 -name "*.tif" | wc -l) -gt 0 ]; then
+            mv ${PAGE_FOLDER%/}/*.tif ${PAGE_FOLDER%/}/OBJ.tif
           fi
-          if [ ! -f "$PAGE_FOLDER/*.jp2" ] && [ $(find $PAGE_FOLDER -maxdepth 1 -name "*.jp2" | wc -l) -gt 0 ]; then
-            mv $PAGE_FOLDER/*.jp2 $PAGE_FOLDER/OBJ.jp2
+          if [ ! -f "${PAGE_FOLDER%/}/OBJ.jp2" ] && [ $(find $PAGE_FOLDER -maxdepth 1 -name "*.jp2" | wc -l) -gt 0 ]; then
+            mv ${PAGE_FOLDER%/}/*.jp2 ${PAGE_FOLDER%/}/OBJ.jp2
           fi
         fi
         unset count_obj_in_folder
 
-        /bin/bash ${CURRENT_DIR}/create_dc.sh "${WORKING_HOME_DIR}/${PAGE_FOLDER}" "${FOLDER}" "${WORKING_HOME_DIR}"
+        /bin/bash ${CURRENT_DIR%/}/create_dc.sh "${WORKING_HOME_DIR%/}/${PAGE_FOLDER}" "${FOLDER}" "${WORKING_HOME_DIR}"
         let COUNTER=COUNTER+1
         sleep $seconds_to_slowdown_validation
         if [[ $COUNTER -gt 30 ]]; then
@@ -338,11 +340,11 @@ if (( $system_ready == '0' || $system_ready == '1')); then
       cd -  &>/dev/null
       # Page level directory checks.
       # ----------------------------------------------------------------------------
-      for PAGE_FOLDER in $FOLDER/*/*/*; do
+      for AGAIN_PAGE_FOLDER in $FOLDER/*/*/*; do
         # Page level folders should only be numeric.
-        if [[ ! $(basename $PAGE_FOLDER) =~ ^[0-9]+$ ]]; then
+        if [[ ! $(basename $AGAIN_PAGE_FOLDER) =~ ^[0-9]+$ ]]; then
           # Checking the the files in this Folder match the expected Naming convention.
-          case "$(basename $PAGE_FOLDER)" in
+          case "$(basename $AGAIN_PAGE_FOLDER)" in
             "MODS.xml" )
               ;;
             "PDF.pdf" )
@@ -353,11 +355,13 @@ if (( $system_ready == '0' || $system_ready == '1')); then
               ;;
             * )
               echo -e "**** FOUND a file that shouldn't be here. **** \n"
-              echo -e "$PAGE_FOLDER: not recognised" >> ${three_errors}/$(basename ${FOLDER}).txt
+              echo -e "$AGAIN_PAGE_FOLDER: not recognised" >> ${three_errors}/$(basename ${FOLDER}).txt
               ;;
           esac
         fi
-      done # end of for PAGE_FOLDER loop
+      done # end of for AGAIN_PAGE_FOLDER loop
+
+
     fi
 
     # Check if folder is named correctly.
@@ -391,6 +395,7 @@ if (( $system_ready == '0' || $system_ready == '1')); then
     # Exit if errors in filesystem exist.
     if [ -s ${three_errors}/$(basename ${collection}).txt ]; then
       echo -e "\tError log is not empty and directory requires attention.\n\n"
+
 
       # move collection to error folder.
       if [[ -d "${three_errors}/${collection}" ]]; then
