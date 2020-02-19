@@ -18,8 +18,11 @@ The script is intended to be run as part of a cron job but can be done manually.
 6.    ├── create_mods.sh
 7.    ├── run.sh
 8.    ├── config.cfg.defaults
-9.    ├── config.cfg 
-10.   └── duplicate_checker.sh
+9.    ├── config.cfg
+10.   ├── whitelist.txt
+11.   ├── PIDS_custom.txt
+12.   ├── duplicate_checker.sh
+13.   └── contpub.csv
 ```
 
 1. Collection templates for generating MODS
@@ -31,7 +34,10 @@ The script is intended to be run as part of a cron job but can be done manually.
 7. The main script to execute.
 8. Config file defauls
 9. Copy config.cfg.defaults to config.cfg
-10. Downloads all of the PIDs in solr, downloads all of the hashes for those pids and loks for duplicates and zero byte files. It outputs several logs including a csv of the `PIDS,Hash Type,Hashes` for later use. This script can be stopped and resumed from where it left off.
+10. A list of PIDS to skip in the duplicate checker script.
+11. Custom list of PIDS to check in the duplicate checker script. This will cause the script to skip the solr query for gathering all of the PIDS.
+12. Downloads all of the PIDs in solr, downloads all of the hashes for those pids and loks for duplicates and zero byte files. It outputs several logs including a csv of the `PIDS,Hash Type,Hashes` for later use. This script can be stopped and resumed from where it left off.
+13. Duplicate Checker exported a CSV file with all of the PIDS with this HASH type and HASH.
 ```
   -- Expected Folder Structure
   Folder Structure
