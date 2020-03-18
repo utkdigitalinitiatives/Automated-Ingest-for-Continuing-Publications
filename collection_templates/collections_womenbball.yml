@@ -1,0 +1,5 @@
+identifier: "lady-vols-basketball_YYYY" # Input identifier. Typically simply replace "YYYY" with the four digit year, 
+# but additions need to be made for postseason, preview, and outlook guides (e.g. lady-vols-basketball_2001_postseason, lady-vols-basketball_1997_outlook).
+year: "YYYY" # Replace "X" a four-digit publication year (the first of the two years for the listed season)
+athletic_season: "20XX-20XX" # Replace XX so that both years the athletic season took place in are represented (2019-2020)
+extent: "XX pages" # Replace "XX" with the total number of digital files/scans as the pages
