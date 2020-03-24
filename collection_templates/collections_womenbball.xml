@@ -4,7 +4,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
-    <identifier type="local">lady-vols-basketball_${year}</identifier>
+    <identifier type="local">${identifier}</identifier>
     <titleInfo supplied="yes">
         <title>Tennessee Lady Volunteers basketball media guide, ${athletic_season}</title>
     </titleInfo>
