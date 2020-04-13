@@ -3,9 +3,7 @@
     <identifier type="issn">1521-6411</identifier>
     <identifier type="filename">alum_${year}${season}</identifier>
     <titleInfo supplied="yes">
-        <title>
-            The Tennessee Alumnus, ${year} ${season}
-        </title>
+        <title>The Tennessee Alumnus, ${year} ${season}</title>
     </titleInfo>
     <abstract>
         Magazine distributed three times a year to University of Tennessee graduates from all campuses and donors covering recent innovations, personal stories, and news.
