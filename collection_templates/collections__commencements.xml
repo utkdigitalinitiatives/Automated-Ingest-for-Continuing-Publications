@@ -2,9 +2,7 @@
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd">
     <identifier type="filename">comm_${year}${season}</identifier>
     <titleInfo supplied="yes">
-        <title>
-            Commencement of the University of Tennessee, Knoxville, ${year} ${season}
-        </title>
+        <title>Commencement of the University of Tennessee, Knoxville, ${year} ${season}</title>
     </titleInfo>
     <abstract>
         Commencement program from ${year}. The University of Tennessee Commencement, with over two centuries of traditions behind it, is the formal ceremony that publicly recognizes graduate candidates and confers degrees upon them. The commencement programs featured in this collection range from 1841 to the present.
