@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Jira
     steps:
+    - uses: actions/checkout@v1
     - name: Login
       uses: atlassian/gajira-login@master
       env:
@@ -21,7 +22,7 @@ jobs:
 
     - name: Create a new issue
       id: create
-      uses: atlassian/gajira-create@master
+      uses: ./atlassian/gajira-create@master
       with:
         project: DIT
         issuetype: Task
