@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: jira
 
 on:
@@ -9,8 +7,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     name: Jira
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v1
     - name: Login
