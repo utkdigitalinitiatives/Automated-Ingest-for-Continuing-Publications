@@ -10,9 +10,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Jira Example
+    name: Jira
     steps:
-    - name: Login
+    - name: Setup Jira
+      uses: atlassian/gajira-cli@v2.0.1
+      with:
+        version: 1.0.20
+    - name: Jira Login
       uses: atlassian/gajira-login@master
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
