@@ -17,6 +17,7 @@ jobs:
       with:
         version: 1.0.20
     - name: Jira Login
+      id: jira_login
       uses: atlassian/gajira-login@master
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
@@ -24,15 +25,14 @@ jobs:
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
     - name: Jira Create issue
-      id: create
       uses: atlassian/gajira-create@v2.0.0
       with:
         project: DIT
-        issuetype: Pull Request
+        issuetype: Bug
         summary: |
           Pull request submitted for ${{ github.repository }} by ${{ github.actor }}
         description: |
-          Compare branch ${{ github.base_ref }}
+          Compare branch
 
     - name: Log created issue
       run: echo "Issue ${{ steps.create.outputs.issue }} was created"
