@@ -17,13 +17,11 @@ jobs:
       with:
         version: 1.0.20
     - name: Jira Login
-      id: jira_login
       uses: atlassian/gajira-login@master
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
     - name: Jira Create issue
       uses: atlassian/gajira-create@v2.0.0
       with:
