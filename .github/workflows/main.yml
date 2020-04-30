@@ -13,7 +13,7 @@ jobs:
     name: Jira
     steps:
     - name: Setup Jira
-      uses: atlassian/gajira-cli@v2.0.1
+      uses: atlassian/gajira-cli@master
       with:
         version: 1.0.20
     - name: Jira Login
@@ -22,8 +22,9 @@ jobs:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-    - name: Jira Create issue
-      uses: atlassian/gajira-create@v2.0.0
+    - name: Create
+      id: create
+      uses: atlassian/gajira-create@master
       with:
         project: DIT
         issuetype: Bug
