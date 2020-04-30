@@ -26,7 +26,7 @@ jobs:
         project: DIT
         issuetype: Pull Request
         summary: |
-          Pull request submitted for ${{ github.repository }} by $ {{ github.actor }}
+          Pull request submitted for ${{ github.repository }} by ${{ github.actor }}
         description: |
           Compare branch ${{ github.base_ref }}
 
