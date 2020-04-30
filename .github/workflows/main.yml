@@ -27,7 +27,7 @@ jobs:
 
     - name: Create
       id: create
-      uses: atlassian/gajira-create@master
+      uses: ./atlassian/gajira-create@master
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
