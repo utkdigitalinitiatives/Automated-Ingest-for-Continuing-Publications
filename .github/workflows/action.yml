@@ -1,8 +1,11 @@
 name: jira_ticket
 
 on:
-  pull_request:
-    types: [opened, reopened]
+  push:
+    branches:
+    - master
+  #pull_request:
+  #  types: [opened, reopened]
 
 jobs:
   build:
