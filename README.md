@@ -271,7 +271,7 @@ __Example of the output__
 ![ScreenShot of check_collection.sh](https://user-images.githubusercontent.com/2738244/60742865-fd6acd80-9f3c-11e9-9f32-e78d821059df.gif)
 
 ## To dos
-* Check the integrity of the image file prior to ingest.
+* Check the integrity of the image file prior to ingest. (in progress)
 * Check that each page's URL renders/returns a valid image.
   * Hash the original page image and compare it to the online version.
 * Check that title matches the title on the book page.
