@@ -24,7 +24,7 @@ jobs:
 
     - name: Create ticket for new PR
       id: create
-      uses: ./atlassian/gajira-create@master
+      uses: atlassian/gajira-create@master
       with:
         project: DIT
         issuetype: Task
