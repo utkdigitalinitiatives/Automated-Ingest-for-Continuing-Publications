@@ -1,0 +1,23 @@
+name: jira
+
+on:
+  push:
+    #pull_request:
+      #types: [opened, reopened]
+      #branches:
+      #- master
+
+jobs:
+  build:
+    name: Jira
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Login
+      id: login
+      uses: atlassian/gajira-login@v2.0.0
+      env:
+        JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+        JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+        JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}

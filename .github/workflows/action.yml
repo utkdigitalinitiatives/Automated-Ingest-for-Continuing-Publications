@@ -1,32 +1,35 @@
-# This is a basic workflow to help you get started with Actions
-
 name: jira
 
 on:
-  pull_request:
-    branches:
-    - master
+  push:
+    #pull_request:
+      #types: [opened, reopened]
+      #branches:
+      #- master
 
 jobs:
   build:
+    name: Jira
     runs-on: ubuntu-latest
-    name: Jira Example
+
     steps:
+    - uses: actions/checkout@v2
     - name: Login
-      uses: atlassian/gajira-login@master
+      id: login
+      uses: atlassian/gajira-login@v2.0.0
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-    - name: Create
+    - name: Create ticket for new PR
       id: create
-      uses: ./atlassian/gajira-create@master
+      uses: atlassian/gajira-create@master
       with:
         project: DIT
-        issuetype: Pull Request
+        issuetype: Task
         summary: |
-          Pull request submitted for ${{ github.repository }} by $ {{ github.actor }}
+          Pull request submitted for ${{ github.repository }} by ${{ github.actor }}
         description: |
           Compare branch
 
