@@ -1,0 +1,13 @@
+    - name: Create a new issue
+      id: create
+      uses: ./atlassian/gajira-create@master
+      with:
+        project: DIT
+        issuetype: Task
+        summary: |
+          Pull request submitted for ${{ github.repository }} by ${{ github.actor }}
+        description: |
+          Compare branch
+
+    - name: Log created issue
+      run: echo "Issue ${{ steps.create.outputs.issue }} was created"
