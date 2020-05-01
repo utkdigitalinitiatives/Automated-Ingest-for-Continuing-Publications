@@ -1,4 +1,13 @@
-    - name: Create a new issue
+name: jira_ticket
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Create ticket for new PR
       id: create
       uses: ./atlassian/gajira-create@master
       with:
